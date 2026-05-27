@@ -19,17 +19,8 @@ Replace `C:\path\to\mas-orchestrator` with the absolute path to this folder on y
 
 ### Option B: GitHub install
 
-After pushing this folder to a public GitHub repository:
-
 ```
-/plugin marketplace add <owner>/<repo>
-/plugin install mas-orchestrator@ImFe
-```
-
-For example, if the repo is `ImFe/mas-orchestrator`:
-
-```
-/plugin marketplace add ImFe/mas-orchestrator
+/plugin marketplace add imchul-oss/mas
 /plugin install mas-orchestrator@ImFe
 ```
 
@@ -49,7 +40,7 @@ git init
 git add .
 git commit -m "Initial commit: MAS Orchestrator plugin"
 git branch -M main
-git remote add origin https://github.com/<owner>/<repo>.git
+git remote add origin https://github.com/imchul-oss/mas.git
 git push -u origin main
 ```
 
