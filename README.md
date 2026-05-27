@@ -8,16 +8,7 @@ Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code /
 
 This plugin is distributed as a Claude Code marketplace. Both local and GitHub installation paths use the same commands.
 
-### Option A: Local install
-
-```
-/plugin marketplace add C:\path\to\mas-orchestrator
-/plugin install mas-orchestrator@ImFe
-```
-
-Replace `C:\path\to\mas-orchestrator` with the absolute path to this folder on your machine.
-
-### Option B: GitHub install
+### GitHub install
 
 ```
 /plugin marketplace add imchul-oss/mas
