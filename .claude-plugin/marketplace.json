@@ -1,0 +1,22 @@
+{
+  "name": "ImFe",
+  "owner": {
+    "name": "ImFe"
+  },
+  "plugins": [
+    {
+      "name": "mas-orchestrator",
+      "source": ".",
+      "description": "Production-grade 8-agent Multi-Agent System orchestrator with proportional response, fact-checking, adversarial verification, and structured output.",
+      "version": "1.9.0",
+      "keywords": [
+        "multi-agent",
+        "orchestration",
+        "quality-assurance",
+        "fact-checking",
+        "adversarial-critic",
+        "structured-output"
+      ]
+    }
+  ]
+}
