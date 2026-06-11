@@ -44,17 +44,23 @@ class TestConcurrencySafety(unittest.TestCase):
         self.assertEqual(loaded["version"], 2)  # auto increment
 
     def test_concurrent_writes(self):
-        """N threads concurrent write -> final version = N."""
+        """N threads concurrent write -> no exceptions, final version = N."""
         N = 5
+        errors = []
+
         def writer(i):
-            sm.write_state("test.json", {"version": 1, "writer": i})
+            try:
+                sm.write_state("test.json", {"version": 1, "writer": i})
+            except Exception as e:  # noqa: BLE001 - collect for assertion
+                errors.append(e)
 
         threads = [threading.Thread(target=writer, args=(i,)) for i in range(N)]
         for t in threads: t.start()
         for t in threads: t.join()
 
+        self.assertEqual(errors, [], f"writer threads raised: {errors}")
         loaded = sm.read_state("test.json")
-        self.assertGreaterEqual(loaded["version"], 1)  # at least 1
+        self.assertEqual(loaded["version"], N)  # serialized CAS: one bump per writer
 
 
 class TestBayesianConvergence(unittest.TestCase):

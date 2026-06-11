@@ -193,12 +193,15 @@ Gate IDs are listed in the Gate Definitions section below.
 | memory_api_sync_failure | 0 | Memory import failure |
 | sla_breach | 4 | Critical SLA breach |
 | multimodal_vision_call | 3b | Vision API opt-in |
+| calibration_recalibration | 6 | 5 real observations accumulated; recommend mapping refresh |
 | review_round_continue | 3 | Review consensus dispersion |
 | peer_review_hop_limit | 3 | Hop >= 3 |
 | interaction_token_budget_breach | 3 | Interaction cost overrun |
 | specialist_worker_promotion | 6 | PM promotion recommendation |
 | skill_creation_review | 6 | Skill creation proposal |
 | agent_evolution_review | 6 | Agent evolution proposal |
+| skillopt_deploy_best | 6 | best_score > current_baseline |
+| goal_driven_max_iter | 3 | Goal-driven loop reaches max_iterations without meeting all criteria |
 </gate_definitions>
 
 ## Error Handling

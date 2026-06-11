@@ -58,6 +58,20 @@ OPTIONAL_TAGS = [
 # Core Parser
 # ============================================================
 
+# Markdown code regions: fenced blocks (``` ... ```) and inline spans (`...`).
+# Tag mentions inside code (e.g. "Mandatory `<thinking>`" in prose, or example
+# pipelines inside fenced blocks) are documentation, not structural tags, and
+# must not be counted by the orphan detector.
+_FENCED_CODE_BLOCK = re.compile(r'```.*?```', re.DOTALL)
+_INLINE_CODE_SPAN = re.compile(r'`[^`\n]*`')
+
+
+def _strip_code_regions(text):
+    """Remove fenced code blocks and inline code spans from Markdown text."""
+    text = _FENCED_CODE_BLOCK.sub('', text)
+    return _INLINE_CODE_SPAN.sub('', text)
+
+
 def extract_xml_sections(text):
     """
     Extract all XML tag sections from the given text.
@@ -78,8 +92,12 @@ def find_orphan_tags(text):
     """
     Detect opening tags without matching closing tags or vice versa.
 
+    Tag mentions inside Markdown code regions (fenced blocks, inline backtick
+    spans) are excluded before counting.
+
     Returns: list of orphan tag descriptions.
     """
+    text = _strip_code_regions(text)
     opening_pattern = re.compile(r'<(\w+)>')
     closing_pattern = re.compile(r'</(\w+)>')
     openings = [(m.group(1), m.start()) for m in opening_pattern.finditer(text)]

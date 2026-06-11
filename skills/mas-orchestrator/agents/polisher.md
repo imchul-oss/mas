@@ -128,7 +128,7 @@ Polished natural-language output is written to `worker_output_polished.json` (XM
 <brand_voice_integration>
 When the `brand-voice` plugin is installed, PM may opt in:
 - `pm_plan.brand_voice_enabled` = true
-- `pm_plan.brand_voice_guidelines` = "<path>"
+- `pm_plan.brand_voice_guidelines` = `"<path>"`
 - When enabled, the brand-voice skill is called for additional polishing.
 </brand_voice_integration>
 

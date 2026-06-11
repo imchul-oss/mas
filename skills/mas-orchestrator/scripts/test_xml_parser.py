@@ -58,6 +58,23 @@ class TestOrphanDetection(unittest.TestCase):
         orphans = xp.find_orphan_tags(text)
         self.assertEqual(len(orphans), 1)
 
+    def test_backtick_quoted_tag_not_orphan(self):
+        # Prose mention like "Mandatory `<thinking>`" must not count as orphan
+        text = "**`<thinking>` mandatory**: agents must externalize reasoning."
+        orphans = xp.find_orphan_tags(text)
+        self.assertEqual(orphans, [])
+
+    def test_fenced_code_block_tag_not_orphan(self):
+        text = "```\n[Phase 1] -- mandatory <thinking>\n```\n<a>x</a>"
+        orphans = xp.find_orphan_tags(text)
+        self.assertEqual(orphans, [])
+
+    def test_real_orphan_still_detected_outside_code(self):
+        text = "`<thinking>` is described here.\n<answer>unclosed"
+        orphans = xp.find_orphan_tags(text)
+        self.assertEqual(len(orphans), 1)
+        self.assertEqual(orphans[0]["tag"], "answer")
+
 
 class TestParseAgentDefinition(unittest.TestCase):
 

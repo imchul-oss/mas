@@ -34,7 +34,7 @@ jobs:
       - name: Run xml_parser unit tests
         working-directory: skills/mas-orchestrator
         run: |
-          python -m pytest scripts/test_xml_parser.py -v
+          python -m unittest discover -s scripts -p "test_xml_parser.py" -v
           python scripts/xml_parser.py
 
       - name: Run XML lint (PR - strict)
@@ -75,22 +75,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run state_manager tests
+      # All test_*.py suites (state_manager, c_implementations, agent_interaction,
+      # multi_mas_federation, xml_parser, skillopt_adapter). Failures turn CI red.
+      - name: Run all unit test suites
         working-directory: skills/mas-orchestrator
-        run: python -m pytest scripts/test_state_manager.py -v
-        continue-on-error: true
-
-      - name: Run c_implementations tests
-        working-directory: skills/mas-orchestrator
-        run: python -m pytest scripts/test_c_implementations.py -v
-        continue-on-error: true
-
-      - name: Run agent_interaction tests
-        working-directory: skills/mas-orchestrator
-        run: python -m pytest scripts/test_agent_interaction.py -v
-        continue-on-error: true
-
-      - name: Run multi_mas_federation tests
-        working-directory: skills/mas-orchestrator
-        run: python -m pytest scripts/test_multi_mas_federation.py -v
-        continue-on-error: true
+        run: python -m unittest discover -s scripts -p "test_*.py" -v

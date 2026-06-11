@@ -25,6 +25,7 @@ import sys
 import argparse
 import shutil
 import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -94,40 +95,79 @@ else:
                 pass
 
 
+_REPLACE_RETRIES = 50
+_REPLACE_DELAY_S = 0.01
+
+
+@contextmanager
+def _exclusive_write_lock(filepath):
+    """Serialize writers to the same destination via a sidecar .lock file.
+
+    The lock is held across the entire read-version -> os.replace window so
+    that the version CAS cannot suffer lost updates, and so that two writers
+    never race on os.replace (which raises PermissionError on Windows when
+    the destination is open in another writer/reader).
+    """
+    lockpath = filepath.with_name(filepath.name + ".lock")
+    lock_handle = open(lockpath, "a+")
+    try:
+        with _file_lock(lock_handle):
+            yield
+    finally:
+        lock_handle.close()
+
+
+def _replace_with_retry(src, dst):
+    """os.replace with short backoff retry.
+
+    On Windows, os.replace fails with PermissionError when the destination is
+    momentarily open by a concurrent reader (no FILE_SHARE_DELETE). Retrying
+    briefly is the standard pattern; POSIX never hits this path.
+    """
+    last_err = None
+    for _ in range(_REPLACE_RETRIES):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError as e:
+            last_err = e
+            time.sleep(_REPLACE_DELAY_S)
+    raise last_err
+
+
 def _atomic_write(filepath, data):
-    """Atomic write with file lock + fsync + os.replace."""
+    """Atomic write with writer serialization (sidecar lock) + fsync + os.replace."""
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
-    # CAS via version field
-    if filepath.exists():
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                with _file_lock(f):
+    with _exclusive_write_lock(filepath):
+        # CAS via version field (race-free: lock held until replace completes)
+        if filepath.exists():
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
                     existing = json.load(f)
-            if "version" in existing and "version" in data:
-                if data["version"] <= existing["version"]:
-                    data["version"] = existing["version"] + 1
-        except (json.JSONDecodeError, OSError):
-            pass
+                if "version" in existing and "version" in data:
+                    if data["version"] <= existing["version"]:
+                        data["version"] = existing["version"] + 1
+            except (json.JSONDecodeError, OSError):
+                pass
 
-    fd, tmppath = tempfile.mkstemp(
-        dir=str(filepath.parent), prefix=f".{filepath.name}.", suffix=".tmp"
-    )
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            with _file_lock(f):
+        fd, tmppath = tempfile.mkstemp(
+            dir=str(filepath.parent), prefix=f".{filepath.name}.", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
-        os.replace(tmppath, filepath)
-        return str(filepath)
-    except Exception:
-        try:
-            os.unlink(tmppath)
-        except OSError:
-            pass
-        raise
+            _replace_with_retry(tmppath, filepath)
+            return str(filepath)
+        except Exception:
+            try:
+                os.unlink(tmppath)
+            except OSError:
+                pass
+            raise
 
 
 # ============================================================
@@ -638,6 +678,27 @@ def init_session(task_description):
 
 
 # ============================================================
+# Breakpoints (gate policy)
+# ============================================================
+
+def set_breakpoint_policy(policy):
+    """Set the session breakpoint policy in breakpoints.json (SKILL.md Phase 0)."""
+    breakpoints = read_state("breakpoints.json") or {
+        "version": 1, "created_at": now_iso(),
+        "breakpoint_policy": policy, "gates": [], "decisions": []
+    }
+    breakpoints["breakpoint_policy"] = policy
+    breakpoints["last_updated"] = now_iso()
+    write_state("breakpoints.json", breakpoints)
+    return breakpoints
+
+
+def list_breakpoints():
+    """Return the current breakpoints.json content (policy, gates, decisions)."""
+    return read_state("breakpoints.json") or {}
+
+
+# ============================================================
 # Adaptive convergence detection (should_continue_loop)
 # ============================================================
 
@@ -740,6 +801,10 @@ def main():
     p_mem.add_argument("--action", choices=["export", "import"], required=True)
     p_mem.add_argument("--data-file")
 
+    p_bp = sub.add_parser("breakpoint")
+    p_bp.add_argument("--action", choices=["set-policy", "list"], required=True)
+    p_bp.add_argument("--policy", default="auto")
+
     args = parser.parse_args()
 
     if args.state_dir: set_state_dir(args.state_dir)
@@ -770,6 +835,12 @@ def main():
         if args.action == "export":
             data = memory_export()
             print(json.dumps(data, ensure_ascii=False, indent=2))
+    elif args.command == "breakpoint":
+        if args.action == "set-policy":
+            bp = set_breakpoint_policy(args.policy)
+            print(json.dumps({"breakpoint_policy": bp["breakpoint_policy"]}, ensure_ascii=False))
+        elif args.action == "list":
+            print(json.dumps(list_breakpoints(), ensure_ascii=False, indent=2))
     else:
         parser.print_help()
 

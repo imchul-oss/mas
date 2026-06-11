@@ -235,7 +235,9 @@ class TestLongHorizonMemory(unittest.TestCase):
         self.assertEqual(len(compressed), 3)
 
     def test_hierarchy_promotion(self):
-        mem = ci.HierarchicalMemory(hot_size=2, warm_size=3)
+        # warm_size=2 so the oldest item (m0) overflows warm into cold:
+        # after 5 adds -> hot=[m3,m4], warm=[m1,m2], cold=[m0]
+        mem = ci.HierarchicalMemory(hot_size=2, warm_size=2)
         for i in range(5):
             mem.add(f"m{i}", f"content{i}")
         # m0 should be in cold (oldest), m3/m4 in hot
