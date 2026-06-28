@@ -1,8 +1,8 @@
 # MAS Orchestrator Plugin
 
-Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop.
+**v2.1.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
 
-A multi-agent system costs ~15x the tokens of a single agent, so this skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. The MAS earns its cost on read-heavy research, audits, and high-stakes synthesis — not on lookups or small edits.
+A multi-agent system costs ~15x the tokens of a single agent, so this skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. The MAS earns its cost on read-heavy research, audits, and high-stakes synthesis — not on lookups or small edits. Its design is grounded in 2025-2026 research (Anthropic context-engineering / multi-agent, Berkeley MAST, GEPA, ThinkPRM, OTel-GenAI) and its complexity is held accountable by an `eval/` harness.
 
 ---
 
@@ -53,19 +53,6 @@ This plugin is distributed as a Claude Code marketplace. Both local and GitHub i
 /plugin uninstall mas-orchestrator@ImFe
 ```
 
-### Pushing to GitHub (first-time setup)
-
-From inside the `mas-orchestrator` folder:
-
-```
-git init
-git add .
-git commit -m "Initial commit: MAS Orchestrator plugin"
-git branch -M main
-git remote add origin https://github.com/imchul-oss/mas.git
-git push -u origin main
-```
-
 ---
 
 ## Output Language Policy
@@ -108,23 +95,33 @@ git push -u origin main
 
 ## Core Capabilities
 
-- Multi-Watchdog debate pool with Bayesian convergence
-- Worker conflict resolution (4-stage Paxos-style)
-- Adversarial Critic (active vulnerability discovery)
-- Concurrency safety (file lock + atomic write + CAS)
-- MCP async tasks, Memory API adapter, Agent Skills bidirectional
-- LangGraph checkpointing + time travel
-- Worker handoff (hop limit <= 3), structured output schema
-- Dynamic source-tier reliability (Beta-Binomial, implemented). Gate-learning / token-budget / dynamic cost-routing are specified but 🚧 deferred until eval-validated — see `references/evolution-policy.md`
-- Causal graph risk analysis, multi-modal watchdog (image / code)
-- SLA / SLO formalization, MCP registry primary
-- Long-horizon memory (compression + hierarchical tiering)
-- Inter-agent harness (review round, debate round, peer review, interactive fact-check, iterative refinement, standup sync)
+**Gating & accountability**
+- MAS Warrant Gate (single-agent default; full pipeline only when warranted) + Cost & Context Strategy (prompt caching, `effort`, distilled summaries, Structured Outputs)
+- `eval/` harness — proves the MAS beats a single agent by enough to justify its tokens
+
+**Verification & quality**
+- Watchdog pool: heterogenized, debate-only-when-disputed, correlated-consensus discount
+- Layered Verifier (deterministic rules → tools → LLM-judge last) + step-level generative verification (ThinkPRM) + LLM-judge bias controls
+- Fresh-context Adversarial Critic with external-signal-grounded reflexion
+- Bayesian convergence (semantic agreement + external signal, not verbalized confidence)
+
+**Observability & reliability**
+- OTel-GenAI telemetry spans (parent_span_id tree, token attribution, derived cost) — replayable into Langfuse/Phoenix
+- Typed handoff contracts (objective/format/boundaries/tools); concurrency safety (file lock + atomic write + CAS)
+- LangGraph-style checkpointing + time travel
+
+**Learning (eval-gated)**
+- Dynamic source-tier reliability (Beta-Binomial, implemented)
+- Typed memory (episodic/semantic/procedural) + timestamp + supersession; ACE delta-merge
+- GEPA Pareto-front reflective prompt optimizer (offline, eval-driven) + SkillOpt 4-loop
+- Gate-learning / token-budget / dynamic cost-routing 🚧 deferred until eval-validated — see `references/evolution-policy.md`
+
+**Reach**
+- Worker conflict resolution (4-stage), goal-driven worker mode, test-first task transformation
+- Causal graph risk analysis, multi-modal watchdog (image / code), SLA/SLO, MCP registry
+- Inter-agent harness (review/debate/peer-review/fact-check/refinement/standup)
 - Multi-MAS federation (hub-spoke / hierarchical / peer / swarm)
 - Context architecture with mandatory XML tags and `<thinking>` blocks
-- Goal-driven worker mode (success criteria + loop)
-- Test-first task transformation
-- SkillOpt 4-loop pattern (rollout / reflect / bounded edit / validation gate)
 
 ---
 
@@ -142,7 +139,7 @@ git push -u origin main
 | `protocols.md` | Inter-agent communication channels |
 | `state-schema.md` | JSON schema for all state files |
 | `evolution-policy.md` | Skill vs. agent evolution policy |
-| `skill-catalog.md` | Available skill catalog |
+| `skill-catalog.md` | Skill hint list (live Skill-tool list is authority) |
 | `context-architecture.md` | XML tag convention constitution |
 | `c-integration-notes.md` | Causal graph / multi-modal / SLA / registry / calibration / memory |
 | `federation-architecture.md` | Federation 4-pattern ADR |
@@ -169,8 +166,8 @@ git push -u origin main
 - `senior_engineer_metrics.py` — AST-based code simplicity metrics
 - `gepa_optimizer.py` — GEPA-style Pareto-front reflective prompt optimizer (offline, eval-driven)
 
-### Tests
-`test_state_manager.py`, `test_c_implementations.py`, `test_agent_interaction.py`, `test_multi_mas_federation.py`, `test_xml_parser.py`, `test_skillopt_adapter.py`
+### Tests (150 passing: 143 scripts + 7 eval; XML lint `--strict` clean)
+`test_state_manager.py`, `test_c_implementations.py`, `test_agent_interaction.py`, `test_multi_mas_federation.py`, `test_xml_parser.py`, `test_skillopt_adapter.py`, `test_gepa_optimizer.py`, `eval/test_scorer.py`
 
 ---
 
