@@ -505,10 +505,28 @@ def _enforce_checkpoint_retention(checkpoint_dir):
 # OpenAI SDK-style Worker Handoff
 # ============================================================
 
-def record_worker_handoff(from_worker, to_worker, context, hop_count=0):
-    """Direct worker-to-worker transfer. Hop count limit prevents infinite ping-pong."""
+# A handoff contract makes the implicit explicit — the #1 lever against the
+# coordination-failure class (~79% of MAS failures, Berkeley MAST 2025).
+HANDOFF_CONTRACT_FIELDS = ("objective", "output_format", "boundaries", "allowed_tools")
+
+
+def validate_handoff_contract(contract):
+    """Return list of missing required contract fields (empty = complete)."""
+    if not isinstance(contract, dict):
+        return list(HANDOFF_CONTRACT_FIELDS)
+    return [f for f in HANDOFF_CONTRACT_FIELDS if not contract.get(f)]
+
+
+def record_worker_handoff(from_worker, to_worker, context, hop_count=0, contract=None):
+    """Direct worker-to-worker transfer. Hop count limit prevents infinite ping-pong.
+
+    `contract` (objective/output_format/boundaries/allowed_tools) makes the
+    handoff a typed contract instead of a prose blob. Missing fields are
+    recorded as a warning, not a hard block (Hermes/headless must not stall).
+    """
     if hop_count >= MAX_HANDOFF_HOPS:
         return {"accepted": False, "reason": f"hop_limit_exceeded ({hop_count})"}
+    missing = validate_handoff_contract(contract) if contract is not None else list(HANDOFF_CONTRACT_FIELDS)
     handoffs = read_state("worker_handoffs.json") or {"version": 1, "handoffs": []}
     handoff_id = f"HO{len(handoffs['handoffs']) + 1:03d}"
     handoffs["handoffs"].append({
@@ -516,12 +534,15 @@ def record_worker_handoff(from_worker, to_worker, context, hop_count=0):
         "from": from_worker,
         "to": to_worker,
         "context": context,
+        "contract": contract or {},
+        "contract_incomplete": missing,
         "hop_count": hop_count + 1,
         "timestamp": now_iso(),
         "accepted": True
     })
     write_state("worker_handoffs.json", handoffs)
-    return {"accepted": True, "handoff_id": handoff_id, "hop_count": hop_count + 1}
+    return {"accepted": True, "handoff_id": handoff_id, "hop_count": hop_count + 1,
+            "contract_incomplete": missing}
 
 
 def get_handoff_chain(starting_handoff_id):
@@ -811,6 +832,137 @@ def get_source_confidence_prior(source):
 
 
 # ============================================================
+# Telemetry — OpenTelemetry GenAI-shaped span log
+# ============================================================
+# Field names follow the OTel GenAI semantic conventions so this file can be
+# replayed into Langfuse/Phoenix over OTLP later with no schema rework.
+# OTel does NOT standardize cost, so cost_usd is a local derived field.
+# Prices: approximate USD per 1M tokens (input, output); update as needed.
+MODEL_PRICES = {
+    "haiku": (1.0, 5.0),
+    "sonnet": (3.0, 15.0),
+    "opus": (5.0, 25.0),
+}
+
+
+def _derive_cost_usd(model, input_tokens, output_tokens):
+    key = next((k for k in MODEL_PRICES if model and k in model.lower()), None)
+    if not key:
+        return None
+    pin, pout = MODEL_PRICES[key]
+    return round((input_tokens * pin + output_tokens * pout) / 1_000_000, 6)
+
+
+def record_span(agent, operation="invoke_agent", model=None, input_tokens=0,
+                output_tokens=0, parent_span_id=None, status="ok",
+                cache_read_tokens=0):
+    """Append one OTel-GenAI-shaped span for an agent step or tool call.
+
+    parent_span_id links steps into a tree so multi-agent handoffs are
+    debuggable. Returns the new span_id (pass it as parent for nested steps).
+    """
+    tel = read_state("telemetry.json") or {"version": 1, "created_at": now_iso()}
+    spans = tel.setdefault("spans", [])
+    span_id = uuid.uuid4().hex[:16]
+    spans.append({
+        "span_id": span_id,
+        "parent_span_id": parent_span_id,
+        "gen_ai.operation.name": operation,
+        "gen_ai.agent.name": agent,
+        "gen_ai.request.model": model,
+        "gen_ai.usage.input_tokens": input_tokens,
+        "gen_ai.usage.output_tokens": output_tokens,
+        "gen_ai.usage.cache_read.input_tokens": cache_read_tokens,
+        "status": status,
+        "timestamp": now_iso(),
+        "cost_usd": _derive_cost_usd(model, input_tokens, output_tokens),
+    })
+    write_state("telemetry.json", tel)
+    return span_id
+
+
+def telemetry_summary():
+    """Aggregate spans per agent + totals (tokens, cost, count)."""
+    tel = read_state("telemetry.json") or {}
+    spans = tel.get("spans", [])
+    per_agent = {}
+    tot_in = tot_out = 0
+    tot_cost = 0.0
+    for s in spans:
+        a = s.get("gen_ai.agent.name", "unknown")
+        m = per_agent.setdefault(a, {"spans": 0, "input_tokens": 0,
+                                     "output_tokens": 0, "cost_usd": 0.0})
+        m["spans"] += 1
+        m["input_tokens"] += s.get("gen_ai.usage.input_tokens", 0)
+        m["output_tokens"] += s.get("gen_ai.usage.output_tokens", 0)
+        m["cost_usd"] += s.get("cost_usd") or 0.0
+        tot_in += s.get("gen_ai.usage.input_tokens", 0)
+        tot_out += s.get("gen_ai.usage.output_tokens", 0)
+        tot_cost += s.get("cost_usd") or 0.0
+    return {
+        "total_spans": len(spans),
+        "total_input_tokens": tot_in,
+        "total_output_tokens": tot_out,
+        "total_cost_usd": round(tot_cost, 6),
+        "per_agent": per_agent,
+    }
+
+
+# ============================================================
+# Typed agent memory (episodic / semantic / procedural)
+# ============================================================
+MEMORY_TYPES = ("episodic", "semantic", "procedural")
+
+
+def add_memory_entry(content, memory_type="procedural", key=None):
+    """Add a typed memory entry with timestamp + supersession.
+
+    If `key` is given, a newer entry of the same (type, key) supersedes older
+    ones (validity-based forgetting — the cheap fix for memory staleness,
+    without a graph DB). Entries persist in memory_index.json.
+    """
+    if memory_type not in MEMORY_TYPES:
+        raise ValueError(f"memory_type must be one of {MEMORY_TYPES}")
+    idx_path = get_persistent_dir() / "memory_index.json"
+    if idx_path.exists():
+        with open(idx_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        data = {"version": 1, "entries": []}
+    data.setdefault("entries", [])
+    if key is not None:
+        for e in data["entries"]:
+            if e.get("key") == key and e.get("memory_type") == memory_type and not e.get("superseded"):
+                e["superseded"] = True
+    entry = {
+        "id": uuid.uuid4().hex[:12],
+        "key": key,
+        "memory_type": memory_type,
+        "content": content,
+        "timestamp": now_iso(),
+        "superseded": False,
+    }
+    data["entries"].append(entry)
+    _atomic_write(idx_path, data)
+    return entry
+
+
+def get_memory_entries(memory_type=None, include_superseded=False):
+    """Return memory entries, filtered by type and (by default) excluding superseded."""
+    idx_path = get_persistent_dir() / "memory_index.json"
+    if not idx_path.exists():
+        return []
+    with open(idx_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    out = data.get("entries", [])
+    if memory_type:
+        out = [e for e in out if e.get("memory_type") == memory_type]
+    if not include_superseded:
+        out = [e for e in out if not e.get("superseded")]
+    return out
+
+
+# ============================================================
 # CLI Entry Point
 # ============================================================
 
@@ -862,6 +1014,21 @@ def main():
     p_src.add_argument("--source", required=True)
     p_src.add_argument("--verdict", choices=["TRUE", "FALSE", "UNVERIFIABLE"])
 
+    p_tel = sub.add_parser("telemetry")
+    p_tel.add_argument("--action", choices=["record", "summary"], required=True)
+    p_tel.add_argument("--agent")
+    p_tel.add_argument("--operation", default="invoke_agent")
+    p_tel.add_argument("--model")
+    p_tel.add_argument("--input-tokens", type=int, default=0)
+    p_tel.add_argument("--output-tokens", type=int, default=0)
+    p_tel.add_argument("--parent")
+
+    p_memidx = sub.add_parser("memory-entry")
+    p_memidx.add_argument("--action", choices=["add", "list"], required=True)
+    p_memidx.add_argument("--content")
+    p_memidx.add_argument("--memory-type", choices=list(MEMORY_TYPES), default="procedural")
+    p_memidx.add_argument("--key")
+
     args = parser.parse_args()
 
     if args.state_dir: set_state_dir(args.state_dir)
@@ -908,6 +1075,23 @@ def main():
             print(json.dumps({"source": args.source,
                               "confidence_prior": get_source_confidence_prior(args.source)},
                              ensure_ascii=False))
+    elif args.command == "telemetry":
+        if args.action == "record":
+            if not args.agent:
+                parser.error("--agent is required for record")
+            sid = record_span(args.agent, args.operation, args.model,
+                              args.input_tokens, args.output_tokens, args.parent)
+            print(json.dumps({"span_id": sid}))
+        elif args.action == "summary":
+            print(json.dumps(telemetry_summary(), ensure_ascii=False, indent=2))
+    elif args.command == "memory-entry":
+        if args.action == "add":
+            if not args.content:
+                parser.error("--content is required for add")
+            print(json.dumps(add_memory_entry(args.content, args.memory_type, args.key),
+                             ensure_ascii=False, indent=2))
+        elif args.action == "list":
+            print(json.dumps(get_memory_entries(args.memory_type), ensure_ascii=False, indent=2))
     else:
         parser.print_help()
 

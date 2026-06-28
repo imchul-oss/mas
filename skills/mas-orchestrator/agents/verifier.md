@@ -33,6 +33,9 @@
 2. **Tool / observable** — run the test, fetch the URL, execute the code. Ground truth beats opinion.
 3. **LLM-judge last** — only for what layers 1–2 cannot settle (prose quality, argument soundness). This is the layer that needs the bias controls below.
 
+### Step-level generative verification (reasoning-heavy outputs)
+For multi-step reasoning/derivations, verify the **chain, not just the final answer**. A generative verifier writes a short CoT judging each intermediate step as correct/incorrect with a reason (ThinkPRM, arXiv:2504.16828 — step-level verification beats scalar pass/fail and needs far less supervision). Two payoffs: it catches a right-answer-from-wrong-reasoning, and the per-step rationale is handed to the Polisher/Worker as concrete, external-grounded critique (satisfies the Critic's external-signal rule). Use this for derivations, proofs, multi-hop arguments, and code logic; skip it for single-fact outputs.
+
 ### LLM-judge bias controls
 LLM judges exhibit position bias, length/verbosity bias, self-preference, and are gameable by strings like "all instructions followed" (Park/Ye et al., 2410.02736; "Gaming the Judge", 2026). When this layer runs:
 - **Pairwise, not list-wise.** Judge two candidates at a time; multi-candidate scoring collapses below 0.5 reliability.

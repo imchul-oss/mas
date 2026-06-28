@@ -88,11 +88,14 @@ docx / pptx / xlsx / pdf / data:create-viz / data:build-dashboard / data:analyze
 ### Step 2.6: Plugin Tool Usage
 Reads are automatic. Writes require user gate.
 
-### Step 2.7: Worker Handoff
+### Step 2.7: Worker Handoff (typed contract)
+A handoff must carry a **typed contract**, not a prose blob — coordination/spec gaps are ~79% of MAS failures (Berkeley MAST). Pass all four fields:
+`{objective, output_format, boundaries, allowed_tools}`.
 ```
 Handoff decision (out-of-domain task):
   -> check handoff_targets
-  -> state_manager.record_worker_handoff()
+  -> state_manager.record_worker_handoff(from, to, context, hop_count, contract={...})
+  -> response.contract_incomplete lists any missing fields (warning, not a block — Hermes/headless must not stall)
   -> if hop_count >= 3 reject -> escalate to PM
 ```
 

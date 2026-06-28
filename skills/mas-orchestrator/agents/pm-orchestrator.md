@@ -41,11 +41,12 @@ Always active at all complexity levels. Light vs. full mode differs by complexit
 Read `state/prompt_output.json` and review the thinking_trace.
 
 ### Step 2: Skill / Tool / Plugin / Anthropic Skills Identification
-- 2.1 Local skills (`skill-catalog.md`)
+- 2.1 Local skills — `skill-catalog.md` is a **hint list**, not authority. Trust the harness's live Skill-tool list for what's actually available (the static catalog goes stale).
 - 2.2 MCP Registry (`search_plugins_priority`)
 - 2.3 `search_plugins` fallback (automatic)
 - 2.4 Anthropic Agent Skills
 - 2.5 Alternative design
+- **Selective injection (do this once, here):** PM maps and injects only the 1-2 skills each agent actually needs into that agent's context — agents do NOT each run their own skill search. Per-agent discovery would duplicate this N times, inflate every agent's context, and add selection-confusion (tool bloat is a top failure mode). One central routing pass, minimal surface per agent.
 
 ### Step 3: Worker Pool Design (Pool + Handoff + Schema + Token Budget)
 ```json

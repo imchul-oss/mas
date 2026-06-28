@@ -119,6 +119,88 @@ class TestSourceReliability(unittest.TestCase):
         self.assertIsNone(sm.get_source_confidence_prior("never-seen.com"))
 
 
+class TestTelemetrySpans(unittest.TestCase):
+    """OTel-GenAI-shaped telemetry writer."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        sm.set_state_dir(self.tmpdir)
+        sm.set_persistent_dir(self.tmpdir)
+
+    def test_record_and_summary(self):
+        root = sm.record_span("pm", "invoke_agent", "claude-opus", 1000, 500)
+        sm.record_span("researcher", "invoke_agent", "claude-sonnet", 2000, 800, parent_span_id=root)
+        summ = sm.telemetry_summary()
+        self.assertEqual(summ["total_spans"], 2)
+        self.assertEqual(summ["total_input_tokens"], 3000)
+        self.assertEqual(summ["total_output_tokens"], 1300)
+        self.assertIn("pm", summ["per_agent"])
+        self.assertIn("researcher", summ["per_agent"])
+
+    def test_cost_derivation(self):
+        sm.record_span("worker", "invoke_agent", "claude-opus", 1_000_000, 1_000_000)
+        summ = sm.telemetry_summary()
+        # opus = (5 + 25) per MTok = 30.0
+        self.assertAlmostEqual(summ["total_cost_usd"], 30.0, places=4)
+
+    def test_unknown_model_cost_none(self):
+        sm.record_span("x", "chat", "mystery-model", 100, 100)
+        self.assertEqual(sm.telemetry_summary()["total_cost_usd"], 0.0)
+
+
+class TestHandoffContract(unittest.TestCase):
+    """Typed handoff contract validation."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        sm.set_state_dir(self.tmpdir)
+        sm.set_persistent_dir(self.tmpdir)
+
+    def test_complete_contract(self):
+        c = {"objective": "x", "output_format": "json", "boundaries": "y", "allowed_tools": ["a"]}
+        self.assertEqual(sm.validate_handoff_contract(c), [])
+        r = sm.record_worker_handoff("w1", "w2", "ctx", 0, contract=c)
+        self.assertTrue(r["accepted"])
+        self.assertEqual(r["contract_incomplete"], [])
+
+    def test_missing_fields_warn_not_block(self):
+        r = sm.record_worker_handoff("w1", "w2", "ctx", 0, contract={"objective": "x"})
+        self.assertTrue(r["accepted"])  # not blocked
+        self.assertIn("output_format", r["contract_incomplete"])
+
+    def test_no_contract_is_all_missing(self):
+        r = sm.record_worker_handoff("w1", "w2", "ctx", 0)
+        self.assertTrue(r["accepted"])
+        self.assertEqual(set(r["contract_incomplete"]), set(sm.HANDOFF_CONTRACT_FIELDS))
+
+
+class TestTypedMemory(unittest.TestCase):
+    """Typed memory entries with timestamp + supersession."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        sm.set_state_dir(self.tmpdir)
+        sm.set_persistent_dir(self.tmpdir)
+
+    def test_add_and_list_by_type(self):
+        sm.add_memory_entry("fact A", "semantic")
+        sm.add_memory_entry("did X", "episodic")
+        self.assertEqual(len(sm.get_memory_entries("semantic")), 1)
+        self.assertEqual(len(sm.get_memory_entries()), 2)
+
+    def test_supersession_by_key(self):
+        sm.add_memory_entry("v1", "procedural", key="route")
+        sm.add_memory_entry("v2", "procedural", key="route")
+        live = sm.get_memory_entries("procedural")
+        self.assertEqual(len(live), 1)
+        self.assertEqual(live[0]["content"], "v2")
+        self.assertEqual(len(sm.get_memory_entries("procedural", include_superseded=True)), 2)
+
+    def test_invalid_type_raises(self):
+        with self.assertRaises(ValueError):
+            sm.add_memory_entry("x", "bogus")
+
+
 class TestWatchdogPoolAggregation(unittest.TestCase):
     """B1.3: Pool aggregation."""
 

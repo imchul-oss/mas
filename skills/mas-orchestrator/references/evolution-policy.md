@@ -218,7 +218,16 @@ Adopt a new spec only after a 6-month stability window. Beta specs require a fal
 
 ### Long-horizon Memory
 - Compression + hierarchical memory (hot/warm/cold).
+- ✅ Typed entries (episodic/semantic/procedural) + timestamp + supersession-by-key (`add_memory_entry`/`get_memory_entries`) — validity-based forgetting, the cheap fix for memory staleness without a graph DB. Aligns with Anthropic's GA file-based memory tool conventions.
 - Future: refinement after primary-source verification.
+
+### GEPA Reflective Prompt Optimization ✅ engine / 🚧 callbacks
+- `scripts/gepa_optimizer.py`: Pareto-front evolution over (quality, cost) driven by `eval/scorer.py` as fitness — keeps trade-off candidates instead of greedy single-metric (GEPA, arXiv:2507.19457).
+- Engine (Pareto maintenance, evolve loop) is implemented + tested; the `reflect_mutate` (LLM rewrites a prompt from eval traces) and `evaluate` (run the eval set) callbacks are caller-injected. Run **offline** against `eval/`; ship a mutated prompt only if it Pareto-dominates the baseline.
+- This replaces dynamic in-loop "learning" optimizers (B1/B3/B4) as the eval-grounded way to improve prompts — it is the one optimizer with a measurable gate.
+
+### ACE delta-merge (anti context-collapse)
+- For any persistent doc that evolves across runs (checkpoints, memory, handoff logs, agent_evolution): **append small deltas, never wholesale-rewrite** (ACE, arXiv:2510.04618 — iterative full-rewrites erode accumulated knowledge / "context collapse"). Critic = Reflector, Polisher/Verifier = Curator of deltas.
 </evolution_policy_section>
 
 ## Self-Audit Learning Persistence

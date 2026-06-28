@@ -6,6 +6,20 @@ A multi-agent system costs ~15x the tokens of a single agent, so this skill is *
 
 ---
 
+## What's new in 2.1.0
+
+Observability, reliability, and offline optimization — all additive, headless-safe (Hermes/cron):
+
+- **OTel-GenAI telemetry** (`telemetry` CLI) — one span per agent step/tool call with `parent_span_id` (span tree), `gen_ai.usage.*` tokens, and derived `cost_usd`. Fixes the previously-dead `telemetry.json`; feeds the Verifier efficiency dimension, `eval/` token attribution, and GEPA's per-agent credit. Replayable into Langfuse/Phoenix over OTLP.
+- **Typed handoff contracts** — `record_worker_handoff(..., contract={objective, output_format, boundaries, allowed_tools})`; missing fields warn, never block (the ~79%-of-MAS-failures coordination class).
+- **Typed memory** — `memory-entry` CLI: episodic/semantic/procedural entries with timestamp + supersession-by-key (validity-based forgetting, no graph DB). Aligned with Anthropic's GA file-based memory tool.
+- **GEPA reflective optimizer** (`scripts/gepa_optimizer.py`) — Pareto-front prompt evolution over (quality, cost) using `eval/scorer.py` as fitness; engine implemented + tested, LLM callbacks injected, runs offline. Ship a mutated prompt only if it Pareto-dominates the baseline.
+- **Step-level generative verification** (ThinkPRM) and **ACE delta-merge** (append deltas, never wholesale-rewrite persistent docs) added to the Verifier / evolution policy.
+- **Headless / Hermes mode** documented — set breakpoint policy `auto`; all learning writers are atomic file appends.
+- **Skill routing clarified** — PM does selective per-agent injection once; agents do not each search; the static catalog is a hint, the live Skill-tool list is authority.
+
+---
+
 ## What's new in 2.0.0
 
 Research-aligned overhaul (Anthropic context-engineering / multi-agent posts, Cognition, Berkeley MAST, DSPy/GEPA, ICLR/Nature verification work):
@@ -153,6 +167,7 @@ git push -u origin main
 - `skillopt_adapter.py` — SkillOpt 4-loop adapter
 - `reflexion_full_stack.py` — Full-stack self-reflection module
 - `senior_engineer_metrics.py` — AST-based code simplicity metrics
+- `gepa_optimizer.py` — GEPA-style Pareto-front reflective prompt optimizer (offline, eval-driven)
 
 ### Tests
 `test_state_manager.py`, `test_c_implementations.py`, `test_agent_interaction.py`, `test_multi_mas_federation.py`, `test_xml_parser.py`, `test_skillopt_adapter.py`

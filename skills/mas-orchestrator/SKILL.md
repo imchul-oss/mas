@@ -89,6 +89,23 @@ The MAS earns its 15x only on read-heavy, parallelizable, or high-stakes work. W
 5. **Structured Outputs for machine handoffs.** For agent→agent machine-parsed payloads (PM plans, verdicts, schemas), use constrained-decoding JSON schema enforcement and drop hand-rolled JSON-repair. Keep **XML tags** for reasoning-rich outputs that interleave `<thinking>` + `<answer>` — forcing complex reasoning into rigid JSON degrades it.
 </cost_context_strategy>
 
+## Observability & Headless Operation
+<observability_headless>
+**Observability (mandatory for multi-agent).** Handoff drops, runaway token spend, and looping sub-agents are only diagnosable with a span tree + per-agent token attribution. Every agent step and tool call emits one OpenTelemetry-GenAI-shaped span:
+```bash
+python scripts/state_manager.py telemetry --action record --agent researcher \
+  --operation invoke_agent --model claude-sonnet --input-tokens N --output-tokens N --parent <span_id>
+python scripts/state_manager.py telemetry --action summary   # tokens + derived cost per agent
+```
+Field names follow the OTel GenAI convention (`gen_ai.usage.*`, `gen_ai.agent.name`, `parent_span_id`), so `telemetry.json` can be replayed into Langfuse/Phoenix over OTLP later with no rework. This is also the data the **Verifier efficiency dimension** and `eval/` token attribution consume, and the per-agent credit signal GEPA needs. `cost_usd` is a local derived field (OTel does not standardize cost).
+
+**Headless / Hermes mode.** The skill runs unattended (Hermes NAS agent, cron). Set the breakpoint policy to `auto` at init so gates log + auto-resolve instead of blocking on a human:
+```bash
+python scripts/state_manager.py breakpoint --action set-policy --policy auto
+```
+All learning writers (`source-reliability`, `telemetry`, `memory-entry`) are plain file appends — safe in headless and concurrent runs (atomic write + lock).
+</observability_headless>
+
 ## Agent Architecture
 <agent_architecture>
 
