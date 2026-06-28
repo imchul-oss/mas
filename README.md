@@ -2,6 +2,23 @@
 
 Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop.
 
+A multi-agent system costs ~15x the tokens of a single agent, so this skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. The MAS earns its cost on read-heavy research, audits, and high-stakes synthesis — not on lookups or small edits.
+
+---
+
+## What's new in 2.0.0
+
+Research-aligned overhaul (Anthropic context-engineering / multi-agent posts, Cognition, Berkeley MAST, DSPy/GEPA, ICLR/Nature verification work):
+
+- **Single skill.** Merged the standalone `karpathy-guidelines` skill into `mas-orchestrator` (still present as an internal reference + Worker injection). One install, one skill.
+- **MAS Warrant Gate + Cost & Context Strategy** in SKILL.md — single-agent default, prompt-cache the stable prefix, `effort` over model-swap, distilled sub-agent summaries, Structured Outputs for machine handoffs.
+- **Fresh-context Adversarial Critic** — reviews output without the Worker's reasoning trace (catches more defects); reflexion must cite an external signal (ungrounded self-correction degrades accuracy).
+- **Watchdog debate, corrected** — heterogenize the pool, debate only disputed/high-impact claims, discount correlated consensus.
+- **Layered Verifier** — deterministic rules → tools → LLM-judge (last), with position/length/self-preference bias controls.
+- **Source reliability is now real code** — Beta-Binomial `source-reliability` promoted from `_legacy/` into `state_manager.py` + CLI + tests.
+- **Honest docs** — dead `recommend_model_for_task` reference removed (routing is static); deferred learning loops (B1/B3/B4) marked 🚧 instead of claimed as active.
+- **`eval/` harness** — proves whether the MAS beats a single agent by enough to justify its tokens.
+
 ---
 
 ## Installation
@@ -84,7 +101,7 @@ git push -u origin main
 - MCP async tasks, Memory API adapter, Agent Skills bidirectional
 - LangGraph checkpointing + time travel
 - Worker handoff (hop limit <= 3), structured output schema
-- RLHF gate learning, dynamic tier reliability, token budget, cost-aware routing
+- Dynamic source-tier reliability (Beta-Binomial, implemented). Gate-learning / token-budget / dynamic cost-routing are specified but 🚧 deferred until eval-validated — see `references/evolution-policy.md`
 - Causal graph risk analysis, multi-modal watchdog (image / code)
 - SLA / SLO formalization, MCP registry primary
 - Long-horizon memory (compression + hierarchical tiering)
@@ -142,9 +159,11 @@ git push -u origin main
 
 ---
 
-## Companion Skill
+## Eval (`skills/mas-orchestrator/eval/`)
 
-`skills/karpathy-guidelines/` — lightweight companion skill providing simplicity principles, referenced by `mas-orchestrator`.
+- `scorer.py` — given paired MAS / single-agent run records, reports whether the MAS earned its ~15x token cost per case and in aggregate.
+- `cases.jsonl` — representative cases, tagged `warrant_mas` so the Warrant Gate itself is testable.
+- `README.md` — how to run; `test_scorer.py` — unit tests.
 
 ---
 

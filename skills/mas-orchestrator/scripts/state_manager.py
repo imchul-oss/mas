@@ -759,6 +759,58 @@ def should_continue_loop():
 
 
 # ============================================================
+# Dynamic Source Reliability (Beta-Binomial, Researcher/Watchdog aid)
+# ============================================================
+
+SOURCE_RELIABILITY_MIN_SAMPLES = 10  # cold-start guard before a prior is emitted
+
+
+def update_source_reliability(source, watchdog_verdict):
+    """Accumulate a Watchdog verdict into source_reliability.json.
+
+    Beta-Binomial conjugate update: TRUE -> pass, FALSE -> fail,
+    UNVERIFIABLE ignored. confidence_prior emitted only after
+    SOURCE_RELIABILITY_MIN_SAMPLES observations (cold-start guard).
+    """
+    rel_path = get_persistent_dir() / "source_reliability.json"
+    if rel_path.exists():
+        with open(rel_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        data = {"version": 1, "sources": {}}
+
+    src = data["sources"].setdefault(source, {
+        "tier_static": None, "pass_count": 0, "fail_count": 0,
+        "confidence_prior": None, "last_used": None,
+    })
+
+    if watchdog_verdict == "TRUE":
+        src["pass_count"] += 1
+    elif watchdog_verdict == "FALSE":
+        src["fail_count"] += 1
+    # UNVERIFIABLE intentionally not counted.
+
+    total = src["pass_count"] + src["fail_count"]
+    if total >= SOURCE_RELIABILITY_MIN_SAMPLES:
+        # Posterior mean of Beta(pass+1, fail+1).
+        src["confidence_prior"] = (src["pass_count"] + 1) / (total + 2)
+    src["last_used"] = datetime.now(timezone.utc).isoformat()
+
+    _atomic_write(rel_path, data)
+    return src
+
+
+def get_source_confidence_prior(source):
+    """Return historical confidence_prior for a source, or None if unknown/cold."""
+    rel_path = get_persistent_dir() / "source_reliability.json"
+    if not rel_path.exists():
+        return None
+    with open(rel_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("sources", {}).get(source, {}).get("confidence_prior")
+
+
+# ============================================================
 # CLI Entry Point
 # ============================================================
 
@@ -805,6 +857,11 @@ def main():
     p_bp.add_argument("--action", choices=["set-policy", "list"], required=True)
     p_bp.add_argument("--policy", default="auto")
 
+    p_src = sub.add_parser("source-reliability")
+    p_src.add_argument("--action", choices=["update", "get"], required=True)
+    p_src.add_argument("--source", required=True)
+    p_src.add_argument("--verdict", choices=["TRUE", "FALSE", "UNVERIFIABLE"])
+
     args = parser.parse_args()
 
     if args.state_dir: set_state_dir(args.state_dir)
@@ -841,6 +898,16 @@ def main():
             print(json.dumps({"breakpoint_policy": bp["breakpoint_policy"]}, ensure_ascii=False))
         elif args.action == "list":
             print(json.dumps(list_breakpoints(), ensure_ascii=False, indent=2))
+    elif args.command == "source-reliability":
+        if args.action == "update":
+            if not args.verdict:
+                parser.error("--verdict is required for update")
+            print(json.dumps(update_source_reliability(args.source, args.verdict),
+                             ensure_ascii=False, indent=2))
+        elif args.action == "get":
+            print(json.dumps({"source": args.source,
+                              "confidence_prior": get_source_confidence_prior(args.source)},
+                             ensure_ascii=False))
     else:
         parser.print_help()
 

@@ -86,6 +86,39 @@ class TestBayesianConvergence(unittest.TestCase):
         self.assertLess(threshold, 1)
 
 
+class TestSourceReliability(unittest.TestCase):
+    """B2: Beta-Binomial dynamic source reliability (promoted from legacy)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        sm.set_state_dir(self.tmpdir)
+        sm.set_persistent_dir(self.tmpdir)
+
+    def test_cold_start_returns_none(self):
+        sm.update_source_reliability("example.com", "TRUE")
+        # Below min samples -> no prior emitted yet.
+        self.assertIsNone(sm.get_source_confidence_prior("example.com"))
+
+    def test_unverifiable_not_counted(self):
+        for _ in range(5):
+            sm.update_source_reliability("u.com", "UNVERIFIABLE")
+        src = sm.update_source_reliability("u.com", "TRUE")
+        self.assertEqual(src["pass_count"], 1)
+        self.assertEqual(src["fail_count"], 0)
+
+    def test_posterior_after_min_samples(self):
+        for _ in range(8):
+            sm.update_source_reliability("good.com", "TRUE")
+        for _ in range(2):
+            sm.update_source_reliability("good.com", "FALSE")
+        prior = sm.get_source_confidence_prior("good.com")
+        # Beta(8+1, 2+1) posterior mean = 9/12 = 0.75
+        self.assertAlmostEqual(prior, 0.75, places=6)
+
+    def test_unknown_source_returns_none(self):
+        self.assertIsNone(sm.get_source_confidence_prior("never-seen.com"))
+
+
 class TestWatchdogPoolAggregation(unittest.TestCase):
     """B1.3: Pool aggregation."""
 

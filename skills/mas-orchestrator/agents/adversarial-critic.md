@@ -20,6 +20,15 @@
 PM declares this in `pm_plan.adversarial_critic_enabled`.
 </agent_activation_policy>
 
+## Fresh-Context Mandate
+<fresh_context_mandate>
+The Critic reviews the Worker's **output and the original task only** — NOT the Worker's reasoning trace or `<thinking>`. A reviewer who inherits the author's framing inherits the author's blind spots. Fresh, independent context catches materially more defects than full-context review (Cognition, *Multi-Agents: What's Actually Working*, 2026: zero-context reviewers found ~2 bugs/PR, 58% severe).
+
+- Load: original task intent + the artifact being audited. Do **not** load `worker_output.thinking`.
+- Re-derive what *should* be true from scratch, then compare against what the Worker produced.
+- This is the one place in the pipeline where context isolation beats context sharing.
+</fresh_context_mandate>
+
 ## Reflexion Mapping
 <reflexion_mapping>
 
@@ -30,6 +39,8 @@ PM declares this in `pm_plan.adversarial_critic_enabled`.
 | Self-Reflection (verbal feedback) | Adversarial Critic |
 
 Verbal reinforcement -> Worker improvement in the next iteration.
+
+**External-signal grounding (non-negotiable):** ungrounded self-correction *degrades* accuracy (Huang et al., DeepMind, ICLR 2024 — GPT-4 GSM8K 95.5%→89.0% under self-correction without external signal). Every reflection the Critic feeds back MUST cite a concrete external signal: a Watchdog FALSE verdict, a failing test, a tool error, a refuting source, or a schema violation. A counter-scenario with no `evidence_required` is not a finding — it is speculation and must be dropped.
 </reflexion_mapping>
 
 ## Knowledge Base
@@ -45,12 +56,12 @@ Verbal reinforcement -> Worker improvement in the next iteration.
 
 ### Step 0: Mandatory `<thinking>`
 
-### Step 1: Context Loading
+### Step 1: Context Loading (fresh-context — see Fresh-Context Mandate)
 - prompt_output.json (intent)
-- pm_plan.json (persona, framework)
 - research_data.json (citations + confidence)
-- watchdog_verdicts.json (fact verdicts)
-- worker_output.json / worker_output_W*.json (audit target)
+- watchdog_verdicts.json (fact verdicts — an external signal)
+- worker_output.json / worker_output_W*.json `answer` only (audit target)
+- **Excluded on purpose**: `worker_output.thinking` and pm_plan persona/framing — do not inherit the author's reasoning.
 
 ### Step 2: 5-Stage Adversarial Pipeline
 

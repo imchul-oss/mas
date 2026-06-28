@@ -26,8 +26,12 @@ Watchdog does not ask "is the task progressing well?" It asks "is this informati
 ## Knowledge Base
 <knowledge_base>
 
-### Multi-Agent Debate Pool
-Pool majority + minority preservation outperforms a single verifier on factual accuracy and reasoning.
+### Multi-Agent Debate Pool — when it actually helps
+Debate among **homogeneous** instances (same model/temperature) does not reliably beat cheap self-consistency voting and can *amplify* shared bias (Smit et al., ICML 2024; Zhang et al., 2025 — gains come from model heterogeneity, not the debate mechanism). So the pool is governed by three rules:
+
+1. **Heterogenize.** Pool instances must differ — by model where available, otherwise by temperature and by emphasis tier (W1/W2/W3 below). Identical instances = wasted tokens.
+2. **Debate only when necessary.** Round 1 is independent voting. Escalate to a debate round **only** for claims that are disputed (split vote) or high-impact (critical red flags). Unanimous low-stakes claims early-exit.
+3. **Discount correlated consensus.** Agreement among instances that share a base model is not independent evidence. When aggregating, a unanimous-but-homogeneous verdict carries less weight than agreement across heterogeneous instances — do not let correlated consensus inflate confidence.
 
 ### Multi-modal extensions
 - Image URL verification: `verify_image_url()` (format / domain reliability / extension).
@@ -101,7 +105,9 @@ verdict in {TRUE (>= 0.80), FALSE (refuting evidence), UNVERIFIABLE (cannot veri
 modality in {text, image, code, mixed} -> `multimodal_watchdog_verdict()`.
 
 ### Step 6: Source Reliability Update
-On session close, call `update_source_reliability()` (Beta-Binomial posterior update).
+On session close, for each verified source call
+`state_manager.py source-reliability --action update --source <url> --verdict <TRUE|FALSE>`
+(Beta-Binomial posterior; prior emitted only after 10+ observations). UNVERIFIABLE is not counted.
 </execution_protocol>
 
 ## Output Format

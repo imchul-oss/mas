@@ -45,6 +45,7 @@ Eight specialized agents collaborate inside an XML-tag based document ecosystem 
 8. **External Spec Compliance**: MCP / Memory / Skills versions are pinned.
 9. **Context Architecture Compliance**: XML tag convention is enforced.
 10. **`<thinking>` mandatory**: Complex / Expert agents must externalize reasoning before answering.
+11. **Eval-justified complexity**: any new learning loop or added agent must beat a single-agent baseline on `eval/` before it ships. Complexity is earned against a measurable eval, not assumed.
 </quality_guardrails>
 
 ## Sub-Agent Optimization
@@ -63,8 +64,30 @@ Eight specialized agents collaborate inside an XML-tag based document ecosystem 
 | 3c.7 | Polisher (Moderate+) | sonnet | Polish throughput |
 | 4 | Verifier | opus | QA accuracy |
 
-PM may apply cost-aware routing based on telemetry (`state_manager.recommend_model_for_task`).
+Model routing is **static** (the table above). Dynamic telemetry-based routing is intentionally deferred until the eval harness (`eval/`) can prove it beats the static table — see Cost & Context Strategy.
 </sub_agent_optimization>
+
+## MAS Warrant Gate
+<mas_warrant_gate>
+**A multi-agent system costs ~15x the tokens of a single agent call, and token volume alone explains ~80% of the performance variance** (Anthropic, *Building a multi-agent research system*, 2025). So the first decision is not "which agents" but "does this task warrant a MAS at all".
+
+Run this gate **before Phase 1**, even when the skill was triggered:
+
+1. **Single-agent default.** If the task is a one-shot lookup, a short rewrite, a known-answer question, or a small surgical code edit → answer directly with one agent. Do not spin up the pipeline. State in one line that MAS was skipped as unwarranted.
+2. **Warrant signals (need ≥1 to proceed to full MAS):** independent sub-questions that parallelize (read-heavy research), high cost-of-being-wrong (fact-critical, irreversible), an explicit audit/verification request, or multi-skill synthesis that exceeds one context.
+3. **Right-size to complexity** (Phase 0.5). Even when warranted, Simple/Moderate down-scale per the complexity table — most tasks do not need all 8 agents.
+
+The MAS earns its 15x only on read-heavy, parallelizable, or high-stakes work. When in doubt, the simplest pattern that passes the task is the correct one.
+</mas_warrant_gate>
+
+## Cost & Context Strategy
+<cost_context_strategy>
+1. **Prompt caching (biggest cost lever).** Put the stable shared prefix (this SKILL.md, role definitions, tool defs, shared context) at the *front* of every sub-agent call so it is cache-hit (cached reads ≈ 0.1x input cost). Order content stable-prefix-first; never interleave volatile content into the cached region.
+2. **`effort` over model-swap.** Use a low/medium reasoning-effort setting for routine coordination and reserve high effort for genuinely hard reasoning (Critic, Verifier, conflict arbitration). Cheaper than swapping to a bigger model.
+3. **Context isolation, not context dumping.** Each sub-agent explores in its own window and returns a **distilled 1,000–2,000 token summary**, not its raw transcript (Anthropic, *Effective context engineering*, 2025). "Context rot" is measured: recall degrades as input grows, well before the window limit.
+4. **Just-in-time context.** Pass reference pointers (state file paths, queries, IDs), not payloads. Load full content only when a specific agent needs it.
+5. **Structured Outputs for machine handoffs.** For agent→agent machine-parsed payloads (PM plans, verdicts, schemas), use constrained-decoding JSON schema enforcement and drop hand-rolled JSON-repair. Keep **XML tags** for reasoning-rich outputs that interleave `<thinking>` + `<answer>` — forcing complex reasoning into rigid JSON degrades it.
+</cost_context_strategy>
 
 ## Agent Architecture
 <agent_architecture>

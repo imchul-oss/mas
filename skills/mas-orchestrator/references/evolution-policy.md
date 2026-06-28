@@ -174,24 +174,25 @@ Adopt a new spec only after a 6-month stability window. Beta specs require a fal
 ## Self-Rolled Improvements
 <evolution_policy_section>
 
-### B1: Gate Decision Learning
+**Status legend:** ✅ implemented in `scripts/` · 🚧 deferred (specified here, not yet in active code — gated behind the `eval/` harness so any learning loop can be proven to help before it ships). History-based "learning" optimizers are explicitly deferred: without an eval set they cannot be validated and may degrade behavior.
+
+### B1: Gate Decision Learning 🚧 deferred
 - During Phase 6 learning review, gate decision history updates `default_recommendation`.
 - sample >= 20 + confidence >= 0.7 -> auto-update with user gate confirmation.
 
-### B2: Dynamic Tier Reliability
-- On session close, `update_source_reliability(source, watchdog_verdict)`.
-- Beta-Binomial conjugate update.
-- Keep static tier until sample >= 10.
+### B2: Dynamic Tier Reliability ✅ implemented
+- On session close, `state_manager.update_source_reliability(source, watchdog_verdict)` (CLI: `source-reliability --action update`).
+- Beta-Binomial conjugate update; `get_source_confidence_prior(source)` for read.
+- Keep static tier until sample >= 10 (cold-start guard).
 
-### B3: Token Budget Enforcement
+### B3: Token Budget Enforcement 🚧 deferred
 - PM assigns per-Worker `token_budget`.
 - Worker self-measures and enforces (compression mode).
 - Verifier validates (`efficiency.token_compliance`).
 
-### B4: Cost-aware Model Routing
-- Telemetry -> `cost_routing_history`.
-- PM Phase 2 (Step 3) calls `recommend_model_for_task()`.
-- sample >= 5 + sonnet_quality >= 4.0 -> sonnet; otherwise opus.
+### B4: Cost-aware Model Routing 🚧 deferred
+- Routing is currently **static** (SKILL.md Sub-Agent Optimization table).
+- Dynamic telemetry-based routing (`cost_routing_history` -> per-task model choice) is deferred until the `eval/` harness can show it beats the static table. No `recommend_model_for_task()` is called in the active pipeline.
 </evolution_policy_section>
 
 ## Future Roadmap

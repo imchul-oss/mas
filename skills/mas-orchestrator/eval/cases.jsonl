@@ -1,0 +1,7 @@
+{"case_id": "fact-1", "task": "What year did the Apollo 11 mission land on the Moon?", "type": "factual", "warrant_mas": false, "note": "single lookup — MAS should be skipped by the Warrant Gate"}
+{"case_id": "rewrite-1", "task": "Rewrite this sentence to be more concise: <text>", "type": "rewrite", "warrant_mas": false, "note": "trivial transform — single agent"}
+{"case_id": "code-small-1", "task": "Add a null check to this 5-line function.", "type": "coding", "warrant_mas": false, "note": "surgical edit — single agent + karpathy guidelines, no pipeline"}
+{"case_id": "research-1", "task": "Compare the privacy guarantees of Signal, WhatsApp, and Telegram with citations.", "type": "research", "warrant_mas": true, "note": "parallelizable read-heavy research — MAS sweet spot"}
+{"case_id": "research-2", "task": "What are the leading approaches to LLM hallucination detection in 2025-2026, with evidence quality assessment?", "type": "research", "warrant_mas": true, "note": "breadth-first + fact-critical — warrants Researcher fan-out + Watchdog"}
+{"case_id": "audit-1", "task": "Audit this 300-line auth module for security vulnerabilities and rank by severity.", "type": "audit", "warrant_mas": true, "note": "explicit verification request, high cost-of-wrong — warrants Critic + Verifier"}
+{"case_id": "synth-1", "task": "Given these 5 conflicting analyst reports, produce a reconciled market outlook.", "type": "synthesis", "warrant_mas": true, "note": "multi-source synthesis exceeding one context — warrants pipeline"}
