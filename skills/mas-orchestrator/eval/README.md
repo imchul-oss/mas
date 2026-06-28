@@ -26,6 +26,20 @@ The scorer reports, per case and in aggregate, whether MAS earned its token cost
 
 ~20 representative cases are enough to see large effect sizes; add human spot-checks for edge cases an LLM judge misses. Keep `cases.jsonl` small and representative, not exhaustive.
 
+## Sample run (`results.jsonl`)
+
+A committed 3-case run (each task executed twice — single agent vs. a compact MAS pipeline of real subagents, scored on one rubric with bias controls):
+
+| case | warrant | single | mas | verdict | tokens |
+|---|---|---|---|---|---|
+| fact-1 (Apollo year) | false | 4.5 pass | 4.5 pass | single_sufficient | 2.0x |
+| research-1 (messaging privacy) | true | 4.2 pass | 4.5 pass | single_sufficient | 2.9x |
+| research-2 (hallucination detection) | true | 4.0 pass | 4.7 pass | **mas_worth_it** | 2.85x |
+
+**MAS earned its cost on 1/3 cases.** It won research-2 because the Verifier layer caught two citation errors the single agent missed (a wrong FacTool source ID and an unverified arXiv ID). It did *not* win the trivial fact (correctly — overkill) or research-1 (a single agent already answered well).
+
+Two honest caveats: (1) the token ratio here is ~2-3x, not the ~15x of deep many-agent research — this pipeline used only 2-3 subagents, where the per-agent base context cost dominates. (2) Scores are this judge's; a real eval pairs them with human spot-checks. The takeaway holds: MAS pays off specifically where independent verification catches errors, not as a blanket default.
+
 ## Self-check
 
 `python eval/scorer.py` (no args) runs a built-in self-check on the three verdict paths.
