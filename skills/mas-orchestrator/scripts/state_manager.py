@@ -226,7 +226,14 @@ def read_state(filename):
             return None
     with open(filepath, "r", encoding="utf-8") as f:
         with _file_lock(f):
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError as e:
+                # A torn/partial write or external corruption must not crash a
+                # headless run. Callers already treat None as "absent" (most use
+                # `read_state(...) or {default}`), so degrade to None + warning.
+                print(f"WARN: corrupt JSON in {filepath}: {e}", file=sys.stderr)
+                return None
 
 
 def write_state(filename, data):
