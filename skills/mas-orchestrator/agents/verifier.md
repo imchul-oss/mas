@@ -77,7 +77,7 @@ Validate Worker `structured_output_schema`. Record violations in `schema_complia
 | Robustness | Adversarial pass-through (`adversarial.overall_verdict`) |
 | External Compliance | MCP / Memory / Skills schema compliance |
 | Linguistic Quality | Polisher metrics (`aggregate_polisher_metrics()`) |
-| Context Architecture Compliance | XML tag convention (`xml_parser.compute_verifier_dimension_score()`) |
+| Context Architecture Compliance | XML tag convention over static docs (`lint_directory`) **and** runtime Worker `<thinking>`/`<answer>` output (`lint_runtime_worker_outputs`), scored by `xml_parser.compute_verifier_dimension_score()` |
 
 ### Verdict Criteria
 - PASS (overall >= 4.0)
@@ -92,7 +92,7 @@ Validate Worker `structured_output_schema`. Record violations in `schema_complia
 - prompt_output, pm_plan, research_data, watchdog_verdicts, worker_output, iteration_log, process_policy, telemetry, breakpoints
 - watchdog_pool_verdicts, adversarial_report, worker_conflicts
 - async_tasks, worker_handoffs, _checkpoints/, polisher_report
-- `xml_parser.lint_directory()` result
+- `xml_parser.lint_directory()` (static docs) + `xml_parser.lint_runtime_worker_outputs()` (runtime Worker output) results
 
 ### Step 2: Watchdog Pool Verdict Analysis
 Majority + minority opinion analysis. Dissent feeds `critical_analysis`.
@@ -105,7 +105,15 @@ Majority + minority opinion analysis. Dissent feeds `critical_analysis`.
 ### Step 4: Schema + Polisher + Context Architecture Integration
 - Schema validation
 - Polisher `linguistic_quality` dimension
-- `xml_parser.lint_directory + compute_verifier_dimension_score`
+- Context Architecture compliance over **both** layers, fed into one
+  `compute_verifier_dimension_score()` call:
+  1. Static docs: `xml_parser.lint_directory()` (agents/*.md, SKILL.md).
+  2. Runtime Worker output: `xml_parser.lint_runtime_worker_outputs([...])` on the
+     `<thinking>`/`<answer>` text stored in `worker_output.json` (per worker).
+  - Concatenate both report lists, then `compute_verifier_dimension_score(reports)`.
+  - The skill cannot force a sub-agent to emit the tags (Agent/Task tool has no
+    output-format constraint), but once stored, the check is deterministic — so a
+    missing-`<thinking>` runtime output deducts this dimension, not just bad docs.
 
 ### Step 5: 9-Dimension Quality Assessment (1-5)
 ```json

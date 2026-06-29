@@ -347,6 +347,38 @@ class TestStructuredOutputValidation(unittest.TestCase):
         self.assertFalse(result["valid"])
         self.assertGreater(len(result["errors"]), 0)
 
+    def test_fallback_nested_enum_minlength(self):
+        """Fallback recurses into nested objects/enum/minLength (issue 6)."""
+        schema = {
+            "type": "object",
+            "required": ["verdict", "meta"],
+            "properties": {
+                "verdict": {"type": "string", "enum": ["TRUE", "FALSE"]},
+                "meta": {
+                    "type": "object",
+                    "required": ["rationale"],
+                    "properties": {"rationale": {"type": "string", "minLength": 5}},
+                },
+            },
+        }
+        # bad enum + nested too-short string -> previously passed silently
+        bad = sm._fallback_validate(
+            {"verdict": "MAYBE", "meta": {"rationale": "no"}}, schema)
+        self.assertTrue(any("enum" in e for e in bad))
+        self.assertTrue(any("minLength" in e for e in bad))
+        good = sm._fallback_validate(
+            {"verdict": "TRUE", "meta": {"rationale": "valid reason"}}, schema)
+        self.assertEqual(good, [])
+
+    def test_fallback_array_items_and_type(self):
+        """Fallback checks array items + type mismatch (issue 6)."""
+        schema = {"type": "array", "items": {"type": "integer"}, "minItems": 1}
+        self.assertEqual(sm._fallback_validate([1, 2, 3], schema), [])
+        errs = sm._fallback_validate([1, "x", 3], schema)
+        self.assertTrue(any("expected integer" in e for e in errs))
+        # bool must not count as integer
+        self.assertTrue(sm._fallback_validate([True], schema))
+
 
 class TestMemoryAPIAdapter(unittest.TestCase):
     """Anthropic Memory API adapter."""

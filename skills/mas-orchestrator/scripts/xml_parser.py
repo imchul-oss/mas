@@ -223,6 +223,34 @@ def lint_directory(dir_path, doc_type_resolver=None):
     return reports
 
 
+def lint_runtime_worker_outputs(worker_outputs):
+    """Lint the runtime `<thinking>`/`<answer>` XML that Workers actually emit.
+
+    `lint_directory` only sees the static `agents/*.md` + `SKILL.md` documents.
+    A skill cannot force a sub-agent to emit the tags (the Agent/Task tool has no
+    output-format constraint), but once the text is stored in `worker_output.json`
+    the Verifier CAN check it deterministically. This feeds the same
+    `compute_verifier_dimension_score()` reports list, so the
+    `context_architecture_compliance` dimension reflects runtime output, not just
+    static docs.
+
+    Args:
+        worker_outputs: list of either raw output strings or
+            {"worker_id": str, "text": str} dicts.
+    Returns: list of compliance reports (same shape as lint_directory).
+    """
+    reports = []
+    for i, wo in enumerate(worker_outputs):
+        if isinstance(wo, dict):
+            text = wo.get("text", "")
+            label = f"worker_output:{wo.get('worker_id', i)}"
+        else:
+            text, label = str(wo), f"worker_output:{i}"
+        reports.append(_parse_text(text, "worker_output_natural",
+                                   source_label=label))
+    return reports
+
+
 # ============================================================
 # Verifier integration (computes context_architecture_compliance dimension)
 # ============================================================
