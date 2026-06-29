@@ -18,6 +18,9 @@ Token cost controls:
 
 import json
 import os
+import sys
+import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,6 +29,42 @@ from collections import defaultdict
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def _atomic_write_json(filepath, data):
+    """Atomic JSON write: temp file + fsync + os.replace.
+
+    Prevents a torn/partial agent_messages.json under concurrent or
+    interrupted writes (headless/Hermes). Kept dependency-free and local so the
+    bus does not inherit state_manager's CAS version-bump (the bus 'version'
+    field is a schema marker, not a write counter). os.replace is retried on
+    Windows, where a concurrent reader can momentarily hold the destination.
+    """
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmppath = tempfile.mkstemp(
+        dir=str(filepath.parent), prefix=f".{filepath.name}.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        last_err = None
+        for _ in range(50):
+            try:
+                os.replace(tmppath, filepath)
+                return
+            except PermissionError as e:  # Windows: dest momentarily open
+                last_err = e
+                time.sleep(0.01)
+        raise last_err
+    except Exception:
+        try:
+            os.unlink(tmppath)
+        except OSError:
+            pass
+        raise
 
 
 # ============================================================
@@ -61,22 +100,26 @@ class AgentMessageBus:
 
     def _load(self):
         if self.file_path.exists():
-            with open(self.file_path, "r", encoding="utf-8") as f:
-                self.data = json.load(f)
-        else:
-            self.data = {
-                "version": 1,
-                "created_at": now_iso(),
-                "interactions": {},  # interaction_id -> metadata
-                "messages": []        # all messages in time order
-            }
-            self._save()
+            try:
+                with open(self.file_path, "r", encoding="utf-8") as f:
+                    self.data = json.load(f)
+                return
+            except json.JSONDecodeError as e:
+                # Corrupt/partial file must not crash a headless run. Warn and
+                # re-initialize in memory; the next _save rewrites atomically.
+                print(f"WARN: corrupt JSON in {self.file_path}: {e}; "
+                      f"reinitializing message bus", file=sys.stderr)
+        self.data = {
+            "version": 1,
+            "created_at": now_iso(),
+            "interactions": {},  # interaction_id -> metadata
+            "messages": []        # all messages in time order
+        }
+        self._save()
 
     def _save(self):
-        # Atomic write is recommended; this module is simplified (uses atomic write when integrated with state_manager)
         self.data["last_updated"] = now_iso()
-        with open(self.file_path, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, ensure_ascii=False, indent=2)
+        _atomic_write_json(self.file_path, self.data)
 
     def start_interaction(self, interaction_type, participants, context=None,
                           max_rounds=DEFAULT_MAX_ROUNDS, max_hops=DEFAULT_MAX_HOPS):

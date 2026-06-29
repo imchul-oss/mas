@@ -78,7 +78,13 @@ def extract_xml_sections(text):
 
     Returns: dict {tag_name: [content_strings]}
     If a tag appears multiple times, its contents are accumulated in a list.
+
+    Tag mentions inside Markdown code regions (fenced blocks, inline backtick
+    spans) are documentation, not structural tags, and are stripped first — the
+    same exclusion find_orphan_tags applies — so example XML in code blocks does
+    not pollute extra_tags_found.
     """
+    text = _strip_code_regions(text)
     # Non-greedy matching, multiline + dotall
     pattern = re.compile(r'<(\w+)>(.*?)</\1>', re.DOTALL)
     sections = {}
