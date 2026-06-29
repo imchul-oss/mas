@@ -178,5 +178,27 @@ class TestLintDirectory(unittest.TestCase):
         self.assertGreaterEqual(len(reports), 2)
 
 
+class TestLintRuntimeWorkerOutputs(unittest.TestCase):
+    """Runtime Worker <thinking>/<answer> compliance (issue 3)."""
+
+    def test_compliant_and_noncompliant_outputs(self):
+        outputs = [
+            {"worker_id": "W1", "text": "<thinking>reason</thinking>\n<answer>ok</answer>"},
+            {"worker_id": "W2", "text": "<answer>no thinking block</answer>"},
+        ]
+        reports = xp.lint_runtime_worker_outputs(outputs)
+        self.assertEqual(len(reports), 2)
+        self.assertEqual(reports[0]["compliance_score"], 1.0)
+        self.assertIn("thinking", reports[1]["missing_required"])
+        # feeds the same dimension scorer as the static-doc reports
+        dim = xp.compute_verifier_dimension_score(reports)
+        self.assertIn("score", dim)
+
+    def test_accepts_raw_strings(self):
+        reports = xp.lint_runtime_worker_outputs(
+            ["<thinking>t</thinking><answer>a</answer>"])
+        self.assertEqual(reports[0]["compliance_score"], 1.0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

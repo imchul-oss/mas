@@ -574,10 +574,75 @@ def get_handoff_chain(starting_handoff_id):
 # Structured Output Schema Validation
 # ============================================================
 
+_JSON_TYPE_MAP = {
+    "object": dict, "array": list, "string": str,
+    "number": (int, float), "integer": int, "boolean": bool, "null": type(None),
+}
+
+
+def _fallback_validate(instance, schema, path="$"):
+    """Dependency-free recursive JSON-Schema check (used only when the
+    `jsonschema` package is absent — kept optional by design so the skill runs
+    in headless/fresh environments without an install step).
+
+    Covers the keywords LLM-generated structured output actually violates:
+    type, required, properties, items, enum, min/maxLength, minimum/maximum,
+    min/maxItems. Recurses into nested objects/arrays so a malformed nested
+    payload no longer silently passes. bool is excluded from numeric checks
+    (bool is a subclass of int in Python)."""
+    errors = []
+    t = schema.get("type")
+    if t:
+        expected = _JSON_TYPE_MAP.get(t)
+        ok = expected is not None and isinstance(instance, expected)
+        if t in ("number", "integer") and isinstance(instance, bool):
+            ok = False  # bool is not a JSON number
+        if expected is not None and not ok:
+            errors.append(f"{path}: expected {t}, got {type(instance).__name__}")
+            return errors  # type mismatch: deeper checks would be noise
+
+    if "enum" in schema and instance not in schema["enum"]:
+        errors.append(f"{path}: {instance!r} not in enum {schema['enum']}")
+
+    if isinstance(instance, str):
+        if "minLength" in schema and len(instance) < schema["minLength"]:
+            errors.append(f"{path}: shorter than minLength {schema['minLength']}")
+        if "maxLength" in schema and len(instance) > schema["maxLength"]:
+            errors.append(f"{path}: longer than maxLength {schema['maxLength']}")
+
+    if isinstance(instance, (int, float)) and not isinstance(instance, bool):
+        if "minimum" in schema and instance < schema["minimum"]:
+            errors.append(f"{path}: below minimum {schema['minimum']}")
+        if "maximum" in schema and instance > schema["maximum"]:
+            errors.append(f"{path}: above maximum {schema['maximum']}")
+
+    if isinstance(instance, dict):
+        for req_field in schema.get("required", []):
+            if req_field not in instance:
+                errors.append(f"{path}: missing required field '{req_field}'")
+        for prop, subschema in schema.get("properties", {}).items():
+            if prop in instance:
+                errors.extend(_fallback_validate(instance[prop], subschema,
+                                                 f"{path}.{prop}"))
+
+    if isinstance(instance, list):
+        if "minItems" in schema and len(instance) < schema["minItems"]:
+            errors.append(f"{path}: fewer than minItems {schema['minItems']}")
+        if "maxItems" in schema and len(instance) > schema["maxItems"]:
+            errors.append(f"{path}: more than maxItems {schema['maxItems']}")
+        item_schema = schema.get("items")
+        if isinstance(item_schema, dict):
+            for i, item in enumerate(instance):
+                errors.extend(_fallback_validate(item, item_schema, f"{path}[{i}]"))
+
+    return errors
+
+
 def validate_worker_output_schema(worker_output, schema):
     """Validate a worker's output against a JSON Schema.
-    Uses a minimal built-in validator to avoid hard dependencies (jsonschema is optional)."""
-    errors = []
+    Prefers the `jsonschema` package; falls back to a recursive built-in check
+    (`_fallback_validate`) when it is absent, so nested/enum/length constraints
+    are still enforced instead of silently passing."""
     try:
         import jsonschema
         try:
@@ -586,14 +651,7 @@ def validate_worker_output_schema(worker_output, schema):
         except jsonschema.ValidationError as e:
             return {"valid": False, "errors": [str(e)]}
     except ImportError:
-        # Fallback: minimal type/required checks
-        if "type" in schema and schema["type"] == "object":
-            if not isinstance(worker_output, dict):
-                errors.append("Expected object")
-        if "required" in schema:
-            for req_field in schema["required"]:
-                if req_field not in worker_output:
-                    errors.append(f"Missing required field: {req_field}")
+        errors = _fallback_validate(worker_output, schema)
         return {"valid": len(errors) == 0, "errors": errors}
 
 
