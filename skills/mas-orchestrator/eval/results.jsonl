@@ -14,3 +14,5 @@
 {"case_id": "synth-1", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 110967, "agents_fired": ["worker", "verifier"], "tool_calls": 0}
 {"case_id": "synth-2", "mode": "single", "passed": true, "overall_score": 4.7, "tokens": 55642, "tool_calls": 0}
 {"case_id": "synth-2", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 110957, "agents_fired": ["worker", "verifier"], "tool_calls": 0}
+{"case_id": "research-2", "mode": "single", "passed": true, "overall_score": 4.4, "tokens": 88735, "tool_calls": 22}
+{"case_id": "research-2", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 184175, "agents_fired": ["worker", "verifier"], "tool_calls": 46}

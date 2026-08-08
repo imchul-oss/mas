@@ -93,7 +93,9 @@ So the pipeline raises the FLOOR, not the ceiling. What ~2x buys is variance red
 3. **The warranted default is a PAIR, not the pipeline.** Worker + Verifier is what earned its keep in measurement. Going beyond it needs a stated reason - genuinely independent sub-questions that parallelize (Researcher fan-out), a contested factual base (Watchdog Pool), an adversarial requirement the Verifier cannot self-serve (Critic). Absent one of those, more agents buy base context, not quality.
 4. **Right-size to complexity** (Phase 0.5) once past the gate.
 
-**What would change this.** Four `warrant_mas: true` cases are unrun (`research-1`, `research-2`, `fact-2`, `code-refactor-1`); research fan-out is the shape most likely to move the ceiling rather than the floor, since it is the one case where agents see different material rather than re-reading the same output. A measured ceiling gain there reopens step 3.
+**Tested 2026-08-08 on the case most favourable to the pipeline.** `research-2` - the one case the June run scored `mas_worth_it`, needing external material, parallel decomposition and evidence grading - was run three ways: single 4.4 at 88,735 tokens, pair **4.8** at 184,175 (2.08x), full 10-agent Complex spec **4.1** at 1,253,663 (14.13x). The full spec cost 6.81x the pair, scored lower, and did not converge - its own Verifier returned CONDITIONAL_PASS 3.22/5 with a blocking defect, so a shippable artifact needs a Phase 5 pass on top of the 1.25M.
+
+**And the reason is an ordering defect, not weak agents.** The Watchdog Pool's corrections landed, because the Worker reads them and is the author. The Critic's did not: it caught a false claim, and nothing downstream can act on one, since the Verifier makes no direct edits and the Polisher never alters facts. The deliverable shipped that claim at Established grade while self-reporting zero propagated false verdicts. **A phase that produces findings after the last agent able to edit the artifact is speculative work.** Before escalating past the pair, check that every phase you add still has an author downstream of it.
 </mas_warrant_gate>
 
 ## Cost & Context Strategy

@@ -49,9 +49,47 @@ policies were therefore moved to opt-in with a named trigger. **This is not a cl
 do not work** - it is the same rule the guardrail already states, applied to incumbents. Each role's
 definition now names the measurement that restores its default.
 
-The decisive experiment, unrun: one Complex case executed twice, full 10-agent spec versus the pair,
-same task and same rubric. That is the only test that separates "the pipeline raises the ceiling"
-from "the pipeline raises the floor", and it costs about 600,000 tokens for one case.
+### The decisive experiment, RUN 2026-08-08
+
+`research-2` executed three ways, same task and rubric. It was chosen as the case most favourable to
+the pipeline: it is the one case the 2026-06-28 run scored `mas_worth_it`, and it needs external
+material, parallel decomposition and evidence grading, so Researcher, Watchdog Pool and Critic all
+have their best case.
+
+| arm | agents | tokens | vs single | score |
+|---|---|---|---|---|
+| single | 1 | 88,735 | 1.00x | 4.4 |
+| pair (Worker + Verifier) | 2 | 184,175 | 2.08x | **4.8** |
+| full Complex spec | 10 | 1,253,663 | **14.13x** | 4.1 |
+
+**The full spec cost 6.81x the pair and scored lower.** It also did not converge: its own Verifier
+returned CONDITIONAL_PASS 3.22/5 with a blocking defect, so reaching a shippable artifact needs a
+Phase 5 iteration on top of the 1.25M already spent. The ~15x from the literature is confirmed for
+this architecture, and the 2.0x floor arithmetic above understates a working pipeline by about 2.4x,
+because agents doing real work exceed their base context.
+
+### Two corrections this experiment forced
+
+**1. Design Principle 0 was too strong, and the Watchdog Pool disproved it.** The claim was that three
+agents over one document give correlated votes. Given PARTITIONED AXES - citation existence, numeric
+provenance, source independence - the three produced disjoint and real defect sets: 11 sources the
+Researcher had written off as unverifiable were real and 6 were Tier A; a benchmark's baseline band
+was mis-transcribed in three places; three pairs of sources cited as independent were one lab, one
+author group, and one benchmark lineage. So the principle is about ATTENTION, not only material: a
+boundary earns its cost when the agent's attention covers ground the previous agent's attention could
+not, and an artifact can be too large for one agent to hold three axes over at once. Same material
+plus a genuinely different axis is a boundary; same material plus a different tone is not.
+
+**2. The pipeline's defect is not its agents, it is that findings have no path to the artifact.**
+The Watchdog Pool's corrections did land, because Phase 3c reads them and the Worker is the author.
+The Critic's did not. It correctly identified a false claim - the deliverable states SAFE's twelve
+authors are all Google DeepMind, graded Established - and nothing downstream can act on it: the
+Verifier "makes no direct edits" and the Polisher "never alters facts". So the artifact shipped the
+false claim at Established grade while its own `self_report` recorded
+`watchdog_false_verdicts_propagated: 0`. Depth was purchased and then discarded between 3c.5 and
+delivery. **Any phase that produces findings after the last agent able to edit the artifact is
+speculative work**, and that ordering defect is worth more than any activation-policy change in this
+document.
 
 ### 1. Separation of Concerns
 Each agent has a single, clear responsibility. Note the tension with Principle 0: separation of

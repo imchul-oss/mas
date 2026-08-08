@@ -24,11 +24,19 @@ Watchdog does not ask "is the task progressing well?" It asks "is this informati
 
 Trigger: the factual base is contested, or a wrong fact is unrecoverable downstream.
 
-**A Pool of 3 requires that the three read DIFFERENT material** (changed 2026-08-08). Three agents
-over one document are correlated judges, and majority voting over correlated judges buys far less
-than the vote count suggests while costing 150,000 tokens of floor. Measured basis for the demotion:
-across 8 eval cases every single agent labelled its own evidence tiers unprompted and declared its
-own uncertain claims, which is the work this role was designed to add to a model that did not.
+**A Pool of 3 requires PARTITIONED AXES, one per instance** (revised 2026-08-08 after measurement).
+The first version of this rule said the three must read different material, on the reasoning that
+three agents over one document are correlated judges. The `research-2` full-spec run disproved it:
+three instances over one 45-source research log, assigned citation existence / numeric provenance /
+source independence, returned disjoint and real defect sets - 11 written-off sources that were real
+and 6 of them Tier A, a baseline band mis-transcribed in three places, and three source pairs cited
+as independent that were one lab, one author group and one benchmark lineage. An artifact can be too
+large for one agent to hold three axes over at once, so the axis IS the boundary. Never spawn a Pool
+without naming each instance's axis: identical instructions over one document is the correlated case
+the original rule described.
+This was the pool that most clearly earned its cost in that run. It stays on trigger only because
+the run also showed the findings can be discarded downstream, not because the verification was
+wasted.
 Restores to default-on: an eval case where an unchecked factual error survives the pair into the
 final answer.
 </agent_activation_policy>
