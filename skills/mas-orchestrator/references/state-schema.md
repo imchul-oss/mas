@@ -1,5 +1,16 @@
 # State File Schemas
 
+## Which of these are live (2026-08-09, v3.0.0)
+
+`worker_output.json`, `verifier_report.json`, `session_state.json` and `meta.json` are written on a
+two-role run. `prompt_output.json`, `pm_plan.json`, `research_data.json`, `watchdog_verdicts.json`,
+`watchdog_pool_verdicts.json`, `adversarial_report.json` and `polisher_report.json` belong to retired
+roles and nothing writes them.
+
+They are documented here anyway, deliberately. `state_manager.py` still defines and tests those
+schemas, and documentation that lags the code is worse than documentation of code nobody calls. If
+those helpers are ever removed, remove these sections in the same commit.
+
 ## Overview
 <state_schema>
 Common fields on every state file: `version` (int, incremented by 1), `timestamp` (ISO-8601), `thinking_trace` (string, agent outputs), `context_architecture_compliance` (object, self-check).

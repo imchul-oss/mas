@@ -47,55 +47,18 @@ operations:status-report / risk-assessment / process-doc / process-optimization 
 
 ## Anthropic Agent Skills
 <integration_note>
-PM Step 2.4 queries the Anthropic Skills API.
+Query the Anthropic Skills API when the local catalogue has no match.
 - Built-in: PowerPoint, Excel, Word, PDF.
 - User-defined skills are supported.
 </integration_note>
 
-## Skill Selection Guide for PM
-<integration_note>
+## Worker Usage
 
-| Task | Primary | Alternative |
-|---|---|---|
-| Report | docx | pdf, md |
-| Presentation | pptx | html (React artifact) |
-| Data analysis | data:analyze | data:statistical-analysis |
-| Visualization | data:create-viz | data:build-dashboard |
-| Risk analysis | operations:risk-assessment | direct analysis |
-| Data table | xlsx | data:write-query |
-| Brand content | brand-voice:brand-voice-enforcement | direct authoring |
+**Pruned 2026-08-09 (v3.0.0).** The removed half was a skill-DISCOVERY protocol for the PM: search
+order, MCP registry fallback, keyword mapping. There is no PM, and a Worker searching for a skill on
+behalf of itself is a lookup, not a protocol. What stays is the catalogue itself, which the Worker
+reads to know what it can delegate to.
 
-### Search Order (when no skill matches)
-1. Check this catalog.
-2. `search_plugins` (plugin marketplace).
-3. MCP Registry first (`search_plugins_priority`).
-4. `search_mcp_registry` fallback.
-5. Anthropic Agent Skills.
-6. Alternative design (basic tools only).
-</integration_note>
-
-## Plugin Discovery Protocol
-<protocol_definition>
-
-### Auto-Discovery Tools
-| Tool | Purpose | When |
-|---|---|---|
-| `search_plugins` | Plugin marketplace | PM Step 2.2 |
-| `suggest_plugin_install` | Suggest install for matched plugin | On match |
-| `search_mcp_registry` | MCP connector | PM Step 2.3 |
-| `suggest_connectors` | Suggest matched connector | On match |
-
-### Discovery Keyword Mapping
-- External comms: slack / teams / discord / messaging / chat
-- Project management: jira / asana / linear / trello
-- Design: figma / canva / design / graphic
-- Documents: notion / confluence / google drive / sharepoint / box
-- Data: snowflake / bigquery / databricks / database / analytics
-- CRM: salesforce / hubspot / crm / sales
-- Development: github / gitlab / jenkins / ci-cd / deployment
-- Monitoring: datadog / pagerduty / opsgenie / monitoring
-
-### Worker Usage
 - `mcp__<prefix>__<tool>`: read is automatic.
 - `mcp__<prefix>__<tool>`: write requires a user gate.
 </protocol_definition>

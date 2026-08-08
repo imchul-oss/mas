@@ -282,5 +282,7 @@ Fourteen gates belonging to retired roles were removed with them; they are liste
 
 Retired 2026-08-09 and kept with their restoration conditions: `_legacy/agents/`.
 
-References: `references/architecture.md`, `protocols.md`, `state-schema.md`, `evolution-policy.md`, `context-architecture.md`, `skill-catalog.md`, `c-integration-notes.md`, `federation-architecture.md`, `karpathy-guidelines.md`, `skillopt-integration.md`, `external-spec-status.md`, `upgrade-assessment-2026-08.md`.
+References, live: `references/architecture.md` (Design Principle 0, cost structure, the measurements), `context-architecture.md` (the XML tag convention `xml_parser.py` enforces), `karpathy-guidelines.md` (Worker coding guidance), `skill-catalog.md` (what the Worker can delegate to), `state-schema.md` (which state files a two-role run writes), `evolution-policy.md` (external spec lifecycle), `external-spec-status.md` (current pins and their assessment), `upgrade-assessment-2026-08.md` (candidate rings).
+
+Retired 2026-08-09 with the reason: `_legacy/references/`.
 </agent_references>
