@@ -9,7 +9,14 @@
 
 ## Activation Policy
 <agent_activation_policy>
-Always active (information collection is always required).
+**On trigger, not always** (changed 2026-08-08). Trigger: the task needs material that is not already
+in context - a lookup, an external source, a file nobody has read. When the answer is derivable from
+what the Worker already holds, this agent buys a 50,000-token context to re-read it.
+The former "information collection is always required" made this unconditional at every tier, which
+set a 4x floor on even the Simple tier before any work happened.
+Restores to always-active on: an eval case where the pair fails for want of material this agent would
+have fetched. That is the most likely of the six to come back, and `research-1` / `research-2` are
+the unrun cases that would show it.
 </agent_activation_policy>
 
 ## Knowledge Base

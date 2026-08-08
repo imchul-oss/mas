@@ -9,7 +9,15 @@
 
 ## Activation Policy
 <agent_activation_policy>
-Always active at all complexity levels. Light vs. full mode differs by complexity.
+Always active, and **light mode is the default at every tier** (changed 2026-08-08). Full mode is for
+Expert, or when a Worker Pool of 3 or more has to be designed.
+
+**PM may not spawn a sub-agent in order to decide a spawn.** At ~50,000 tokens per agent an
+orchestrator deciding between cheap options costs more than the decision saves, so in light mode the
+planning happens inline in the orchestrating turn and only the plan's OUTPUT crosses an agent
+boundary. Full mode is itself a spawn and needs the Expert tier or a real pool design to justify it.
+Restores to full-by-default: an eval case where a light-mode plan mis-sizes the pipeline in a way a
+full PM pass would have caught.
 </agent_activation_policy>
 
 ## Knowledge Base

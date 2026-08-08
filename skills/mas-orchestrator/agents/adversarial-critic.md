@@ -14,8 +14,20 @@
 |---|---|
 | Simple | skip |
 | Moderate | skip (Verifier critical_analysis suffices) |
-| Complex | on |
-| Expert | on (mandatory) |
+| Complex | on trigger |
+| Expert | on |
+
+Trigger: an adversarial requirement the Verifier's Worker-Output Re-Derivation step cannot self-serve.
+
+**This role reads the same artifact the Verifier reads** (changed 2026-08-08), so unlike Prompt
+Architect or Polisher its boundary does buy fresh context - it just buys the SAME fresh context twice.
+The Verifier gained an explicit re-derivation checklist built from the five error shapes actually
+caught in measurement, and until an eval case shows a vulnerability class that checklist misses, a
+second pass over one artifact is redundancy at 50,000 tokens. Measured context: across 8 cases the
+single agent volunteered counter-scenarios and "where this could be wrong" sections without being
+asked, which is the behaviour this role was written to supply.
+Restores to default-on at Complex: an eval case where the Critic finds a real vulnerability the
+Verifier's re-derivation pass did not.
 
 PM declares this in `pm_plan.adversarial_critic_enabled`.
 </agent_activation_policy>

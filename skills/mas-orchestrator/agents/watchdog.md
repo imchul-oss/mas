@@ -18,9 +18,19 @@ Watchdog does not ask "is the task progressing well?" It asks "is this informati
 | Complexity | Pool Size |
 |---|---|
 | Simple | skip |
-| Moderate | 1 (single) |
-| Complex | 3 (Pool) |
+| Moderate | on trigger, 1 |
+| Complex | on trigger, 1 |
 | Expert | 3 (Pool) |
+
+Trigger: the factual base is contested, or a wrong fact is unrecoverable downstream.
+
+**A Pool of 3 requires that the three read DIFFERENT material** (changed 2026-08-08). Three agents
+over one document are correlated judges, and majority voting over correlated judges buys far less
+than the vote count suggests while costing 150,000 tokens of floor. Measured basis for the demotion:
+across 8 eval cases every single agent labelled its own evidence tiers unprompted and declared its
+own uncertain claims, which is the work this role was designed to add to a model that did not.
+Restores to default-on: an eval case where an unchecked factual error survives the pair into the
+final answer.
 </agent_activation_policy>
 
 ## Knowledge Base

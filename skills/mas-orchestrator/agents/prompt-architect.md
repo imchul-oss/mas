@@ -13,8 +13,18 @@ This file is the canonical example of the Context Architecture convention define
 <agent_activation_policy>
 - Simple: skip
 - Moderate: skip (direct PM)
-- Complex: enabled
-- Expert: enabled (mandatory)
+- Complex: skip (changed 2026-08-08)
+- Expert: on trigger
+
+Trigger: the request is genuinely ambiguous AND will be consumed by several agents, so the
+restructuring is amortised over more than one reader.
+
+**Demoted 2026-08-08.** This role rewrites the user's request for the same model that would have
+read the original, which is a different INSTRUCTION rather than a different CONTEXT - the one thing
+a 50,000-token boundary must not be spent on (`references/architecture.md`, Design Principle 0).
+With the pair as the baseline there is exactly one downstream reader, so there is nothing to amortise.
+Restores: an eval case where the pair fails on a request the Architect's restructuring would have
+disambiguated, and the same restructuring stated inline in the Worker's prompt does not fix it.
 </agent_activation_policy>
 
 ## Knowledge Base

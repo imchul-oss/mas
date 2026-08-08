@@ -184,12 +184,29 @@ Atomic writes + file lock. Async tasks and handoffs are initialized here. XML li
 
 ### Phase 0.5: Complexity Classification
 
-| Complexity | Watchdog Pool | Adversarial | Polisher | Async | Checkpoint | Handoff | `<thinking>` |
-|---|---|---|---|---|---|---|---|
-| Simple | off | off | optional | off | off | off | optional |
-| Moderate | 1 | off | on | optional | off | off | on |
-| Complex | 3 (Pool) | on | on | on | on | optional | on |
-| Expert | 3 (Pool) | on | on | on | on | on | on |
+Baseline for every tier is the **pair**: Worker + Verifier. Everything else is opt-in against a named
+trigger, because at ~50,000 tokens per agent a default-on role bills whether or not it was needed,
+and none of the opt-in roles has ever been measured against a single-agent baseline (guardrail 11,
+applied to incumbents - see `references/architecture.md`).
+
+| Complexity | Researcher | Watchdog | Adversarial | Polisher | Prompt Architect | Async | Checkpoint | Handoff | `<thinking>` |
+|---|---|---|---|---|---|---|---|---|---|
+| Simple | on trigger | off | off | off | off | off | off | off | optional |
+| Moderate | on trigger | on trigger | off | on trigger | off | optional | off | off | on |
+| Complex | on trigger | on trigger | on trigger | on trigger | off | on | on | optional | on |
+| Expert | on trigger | 3 (Pool) | on | on trigger | on trigger | on | on | on | on |
+
+**Triggers.** Researcher: the task needs material not already in context (a lookup, a source, a file
+nobody has read). Watchdog: the factual base is contested or a wrong fact is unrecoverable; Pool of 3
+only when the three would read DIFFERENT material, since three agents over one document give
+correlated votes. Adversarial Critic: an adversarial requirement the Verifier's re-derivation step
+cannot self-serve - it reads the same artifact the Verifier does, so it is redundancy until that is
+shown false. Polisher: the output has a named audience and a style contract; measured single-agent
+output needed no polish pass. Prompt Architect: the request is genuinely ambiguous AND will be
+consumed by several agents.
+
+PM runs in light mode by default and is the one role that may not spawn to decide a spawn - at 50,000
+tokens, an orchestrator deciding between cheap options costs more than the decision saves.
 
 ### Phases 1 to 6
 Each phase consults the relevant `agents/*.md` definition. All agent definitions use the XML-tag convention defined in `references/context-architecture.md`.

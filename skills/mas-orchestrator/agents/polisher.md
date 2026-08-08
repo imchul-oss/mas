@@ -12,10 +12,20 @@
 
 | Complexity | Activation |
 |---|---|
-| Simple | optional |
-| Moderate | on (default) |
-| Complex | on |
-| Expert | on |
+| Simple | off |
+| Moderate | on trigger |
+| Complex | on trigger |
+| Expert | on trigger |
+
+Trigger: the output has a named audience and a style contract to enforce.
+
+**Demoted from default-on 2026-08-08.** Its boundary changes what is ASKED, not what is SEEN - it
+re-reads the Worker's prose to rewrite it, and the Worker is the same model. Measured basis: across
+8 eval cases the single-agent and Worker outputs arrived structured, hedged and readable with no
+polish pass, and the Korean output policy is a rule any agent can be given in its own prompt for
+free rather than a reason to spend 50,000 tokens.
+Restores to default-on: an eval case scored on Linguistic Quality where the pair's output falls below
+the pass threshold and a polish pass lifts it.
 
 PM declares this in `pm_plan.polisher_enabled`.
 </agent_activation_policy>
