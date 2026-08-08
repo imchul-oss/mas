@@ -132,6 +132,48 @@ different question than the one it asks: not "is this task type hard" and not ev
 high", but "how expensive is an occasional wrong answer here". Both audits are load-bearing outputs
 where one bad fix ships; both syntheses are analyses a reader would sanity-check anyway.
 
+## Run 2026-08-09 (late) - the v2.6.0 Verifier contract, measured with replicates
+
+First comparison in this programme that resolves. The v2.5.0 Verifier contract (correction log inside
+the deliverable, own additions inheriting certainty) against the v2.6.0 contract (log split to a
+separate report, own additions graded at the Worker's standard), same Worker output, same task, four
+independent judges each.
+
+| contract | judge scores | mean | sd |
+|---|---|---|---|
+| v2.5.0 | 4.4, 4.4, 4.4, 4.6 | 4.450 | 0.100 |
+| v2.6.0 | 4.6, 4.8, 4.8, 4.7 | **4.725** | 0.096 |
+
+Delta **+0.275** against a threshold of 0.14 from the observed spreads: **RESOLVED**.
+
+The designed secondary metric is cleaner still, and it needs no score resolution at all - count how
+many judges name the defect:
+
+| defect | v2.5.0 | v2.6.0 |
+|---|---|---|
+| correction log is off-task bulk | **4 of 4** | **0 of 4** |
+| the reporting-period figure the Verifier introduced is wrong | **4 of 4** | **0 of 4** |
+
+The v2.6.0 Verifier declined to present its own subtraction as a source figure, which is constraint 2
+working exactly as written. A binary "did any judge cite this" is far more sensitive than a mean at
+affordable replicate counts, and it should be the primary metric for a targeted fix.
+
+**New residual, for the next pass**: 3 of 4 judges flagged the comparison table's "affiliate sharing:
+Telegram none" cell, one of them establishing it is wrong (Telegram's policy 8.2 does provide for
+sharing with group companies). It is the only cell in that table with no source attached.
+
+### The gate had to be fixed to see this
+
+`variance_gate.py` first reported UNRESOLVED here, because it used a fixed pooled sd of 0.276 for
+every comparison. That constant came from the noisiest document in the programme - one whose score
+varied 0.377 because it contained an error some judges found and some missed - and applying it to two
+tightly clustered arms (sd 0.100 and 0.096) refused a difference roughly four standard errors out. It
+now uses Welch with the observed spreads and falls back to the constant only for an arm with no
+replicates. **A gate calibrated on the worst case rejects real results everywhere else**, which is the
+same failure as a gate that passes everything, pointed the other way.
+
+---
+
 ## RETRACTION 2026-08-09 - every mean-comparison verdict below is withdrawn
 
 Judge variance was measured last, and it should have been measured first. Four independent judges,

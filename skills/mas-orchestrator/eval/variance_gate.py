@@ -33,8 +33,20 @@ from pathlib import Path
 MEASURED_POOLED_SD = 0.276
 
 
-def _se_of_delta(n_a, n_b, sd=MEASURED_POOLED_SD):
-    return sd * ((1 / max(n_a, 1)) + (1 / max(n_b, 1))) ** 0.5
+def _se_of_delta(a, b):
+    """Welch standard error from the OBSERVED spreads when replicates exist.
+
+    The fallback constant is only for an arm with no replicates. Using it everywhere was
+    a real defect, found 2026-08-09 the first time this gate met a genuine effect: the
+    constant comes from a document whose score varied 0.377 because it contained an error
+    some judges found and some missed, and applying that spread to two tightly-clustered
+    arms (sd 0.100 and 0.096) refused a +0.275 difference that is roughly 4 standard
+    errors out. A gate calibrated on the noisiest case rejects real results everywhere
+    else; measure the arms you actually have.
+    """
+    var_a = st.variance(a) if len(a) > 1 else MEASURED_POOLED_SD ** 2
+    var_b = st.variance(b) if len(b) > 1 else MEASURED_POOLED_SD ** 2
+    return (var_a / max(len(a), 1) + var_b / max(len(b), 1)) ** 0.5
 
 
 def analyse(path, min_n=3):
@@ -55,7 +67,7 @@ def analyse(path, min_n=3):
         if not a or not b:
             continue
         delta = st.mean(a) - st.mean(b)
-        se = _se_of_delta(len(a), len(b))
+        se = _se_of_delta(a, b)
         threshold = 1.96 * se
         resolvable = abs(delta) > threshold
         row = {
@@ -98,10 +110,16 @@ def _selftest():
         assert not any(x.startswith("[V1]") for x in f)
         assert rows[0]["sd_single"] is not None and rows[0]["sd_mas"] is not None
 
-        # replicated but overlapping: refuse despite the replicates
-        write([{"case_id": "z", "mode": "single", "overall_score": v} for v in (4.5, 4.4, 4.6)] +
-              [{"case_id": "z", "mode": "mas", "overall_score": v} for v in (4.4, 4.5, 4.5)])
+        # replicated, wide spread, small gap: refuse despite the replicates
+        write([{"case_id": "z", "mode": "single", "overall_score": v} for v in (4.9, 4.2, 4.5)] +
+              [{"case_id": "z", "mode": "mas", "overall_score": v} for v in (4.8, 4.1, 4.6)])
         assert analyse(p)[0][0]["verdict"] == "UNRESOLVED"
+
+        # tight spreads make a small gap resolvable - the case the fixed-constant
+        # version wrongly refused
+        write([{"case_id": "t", "mode": "single", "overall_score": v} for v in (4.4, 4.4, 4.4, 4.6)] +
+              [{"case_id": "t", "mode": "mas", "overall_score": v} for v in (4.6, 4.8, 4.8, 4.7)])
+        assert analyse(p)[0][0]["verdict"] == "RESOLVED", analyse(p)[0]
 
         # an arm missing entirely is skipped, not crashed
         write([{"case_id": "w", "mode": "single", "overall_score": 4.0}])
