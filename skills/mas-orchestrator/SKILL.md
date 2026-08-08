@@ -23,12 +23,29 @@ Eight specialized agents collaborate inside an XML-tag based document ecosystem 
 
 ## Token Efficiency Protocol
 <token_efficiency_protocol>
-**Rule 0 dominates the rest: cut AGENTS before you cut payload.** Measured 2026-08-08 over 20
-sub-agent runs, a sub-agent costs about **50,000 tokens of base context before it does any work**;
-across cases the whole spread ran 50,125 to 70,445. Every rule below trims the payload *on top of*
-that floor, so removing one agent saves more than perfectly optimising the context of four. The
-rules stay because they are close to free, but a plan that adds a phase to save context has the
-arithmetic backwards.
+**Rule 0: cut AGENTS before you cut payload - in NOMINAL tokens, which is the only unit measured
+here.** A sub-agent costs about **50,000 tokens of base context before it does any work** (measured
+2026-08-08 over 20 runs; the spread ran 50,125 to 70,445). Every rule below trims payload *on top of*
+that floor, so removing one agent saves more than perfectly optimising four - and a plan that adds a
+phase to save context has the arithmetic backwards.
+
+**The caveat is load-bearing and was missed for two days.** Every figure in this file is a nominal
+token count, not a billed cost. Prompt caching bills a cached read at roughly a tenth of fresh input,
+and the ~50k base - shared system prompt and tool definitions, identical across sibling sub-agents -
+is precisely the most cacheable part of the bill. If the host shares that prefix across siblings,
+the marginal BILLED cost of one more agent is far below its nominal 50k and rule 0 weakens
+accordingly. Measured 2026-08-09: the orchestrating session runs at a **98.6% cache hit rate**, so
+caching is demonstrably active there; sub-agent billed cost could not be measured at all, because no
+sidechain record reaches the session transcript and the per-call token figure is nominal - four
+byte-identical judge prompts varied 3.5%, where a cache discount would show an order of magnitude.
+So: rule 0 is established in nominal tokens and UNVERIFIED in billed cost. What would settle it is a
+per-sub-agent usage record carrying `cache_read_input_tokens`.
+
+**What is actionable regardless: order a sub-agent prompt stable-prefix-first.** Put the rubric,
+role, and shared instructions ahead of the task-specific part, so sibling agents share the longest
+possible identical prefix. This is Cost & Context Strategy rule 1, and the 2026-08-09 eval harness
+violated it - the judge prompts opened with the task and the document path, which caps the shared
+prefix at a few dozen tokens for no reason.
 
 Two consequences worth stating: an 8-agent pipeline costs ~400k in floor alone regardless of task
 size, so proportional response is a COST control and not only a quality one; and on small tasks the

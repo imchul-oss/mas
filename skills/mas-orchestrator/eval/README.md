@@ -132,6 +132,21 @@ different question than the one it asks: not "is this task type hard" and not ev
 high", but "how expensive is an occasional wrong answer here". Both audits are load-bearing outputs
 where one bad fix ships; both syntheses are analyses a reader would sanity-check anyway.
 
+## Every cost figure here is NOMINAL tokens, not billed cost (2026-08-09)
+
+Read the ratios below with this attached. `subagent_tokens` is a nominal count: four byte-identical
+judge prompts came back within 3.5% of each other, where a cache discount on the shared prefix would
+show an order of magnitude. No sidechain record reaches the session transcript, so sub-agent billed
+cost is not observable from disk at all. What IS measured: the orchestrating session runs at a
+**98.6% cache hit rate**, 347.8M of 352.9M input-side tokens served from cache.
+
+This matters most for the pipeline comparisons. The ~50k per-agent base is shared system prompt and
+tool definitions, identical across sibling agents, and therefore the most cacheable part of the bill.
+If the host shares that prefix across siblings, the 2.08x and 14.13x nominal ratios overstate the
+billed gap - and they overstate it *most* for the configuration with the most agents. The direction
+of the error is known; its size is not. A per-sub-agent usage record carrying
+`cache_read_input_tokens` would settle it.
+
 ## Run 2026-08-09 (late) - the v2.6.0 Verifier contract, measured with replicates
 
 First comparison in this programme that resolves. The v2.5.0 Verifier contract (correction log inside
