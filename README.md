@@ -1,10 +1,20 @@
 # MAS Orchestrator Plugin
 
-**v2.1.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
+**v2.2.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
 
-A multi-agent system costs ~15x the tokens of a single agent, so this skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. The MAS earns its cost on read-heavy research, audits, and high-stakes synthesis — not on lookups or small edits. Its design is grounded in 2025-2026 research (Anthropic context-engineering / multi-agent, Berkeley MAST, GEPA, ThinkPRM, OTel-GenAI) and its complexity is held accountable by an `eval/` harness.
+This skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. As of 2.2.0 that gate is calibrated on measurement rather than on a cited figure — a Worker+Verifier pair costs **1.8x-2.2x** a single agent on this runtime, not the ~15x that describes a deep many-agent research run, because a sub-agent carries ~50,000 tokens of base context before doing any work. What that ~2x buys is **variance reduction, not capability**: across the measured cases the single agent found every planted trap, and the pipeline won only where a Verifier caught the first agent's own error. So the gate asks how expensive an occasional wrong answer is, not what type of task it is. Design is grounded in 2025-2026 research (Anthropic context-engineering / multi-agent, Berkeley MAST, GEPA, ThinkPRM, OTel-GenAI), and complexity is held accountable by the `eval/` harness rather than asserted.
 
 ---
+
+## What's new in 2.2.0
+
+Three changes, each from the 8-case measured run, all subtractive or retargeting rather than additive:
+
+- **Warrant Gate re-derived.** Cost premise corrected to the measured 1.8x-2.2x for a verify pair, with the ~15x kept for the shape it actually describes. Decision axis moved from task type and stakes to cost-of-an-occasional-wrong-answer, because both old proxies mis-sorted the measured set — two audits warranted the pipeline and two syntheses did not, and all four were "high stakes" under the old signals. The warranted default is now a **pair**, not the full pipeline; escalating past it needs a named reason.
+- **Token efficiency, rule 0: cut agents before payload.** At a ~50,000-token per-agent floor, removing one agent saves more than perfectly optimising the context of four. An 8-agent run costs ~400k in floor alone regardless of task size, which makes proportional response a cost control and not only a quality one.
+- **Verifier gained a mandatory Worker-Output Re-Derivation step** — recompute derived numbers, check a remedy is scoped to the object the diagnosis named, look for recoverable information the Worker discarded, check the conclusion against the Worker's own reasoning, name claimed-but-absent items. These are the five error shapes that were actually caught in measurement, not a generic checklist.
+
+Unchanged: the 8-agent architecture. Four `warrant_mas: true` cases remain unrun, and research fan-out is the one shape that could move the ceiling rather than the floor.
 
 ## What's new in 2.1.0
 
