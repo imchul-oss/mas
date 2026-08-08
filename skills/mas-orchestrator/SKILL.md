@@ -270,5 +270,5 @@ Gate IDs are listed in the Gate Definitions section below.
 | Polisher | `agents/polisher.md` |
 | Verifier | `agents/verifier.md` |
 
-References: `references/architecture.md`, `protocols.md`, `state-schema.md`, `evolution-policy.md`, `context-architecture.md`, `skill-catalog.md`, `c-integration-notes.md`, `federation-architecture.md`, `karpathy-guidelines.md`, `skillopt-integration.md`.
+References: `references/architecture.md`, `protocols.md`, `state-schema.md`, `evolution-policy.md`, `context-architecture.md`, `skill-catalog.md`, `c-integration-notes.md`, `federation-architecture.md`, `karpathy-guidelines.md`, `skillopt-integration.md`, `external-spec-status.md`, `upgrade-assessment-2026-08.md`.
 </agent_references>

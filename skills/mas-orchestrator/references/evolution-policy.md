@@ -157,10 +157,19 @@
 <evolution_policy_section>
 
 ### Spec Pinning
-Explicit in `meta.external_spec_pinned_versions`.
+Explicit in `meta.external_spec_pinned_versions`. The pin records what we RUN ON, never what upstream
+has most recently published; the gap between the two is assessed in `references/external-spec-status.md`
+and carries a dated decision.
 
 ### Spec Change Detection
-On Phase 0 init, compare fetched spec version with the pinned one. Mismatch triggers `evolution_review`.
+Detection is a **dated human review**, not an automatic check. Nothing in `scripts/` fetches an
+upstream spec version, so a sentence here claiming a Phase 0 comparison would describe a step that
+never runs - and the review it was meant to trigger went unheld from 2026-06-28 to 2026-08-08 while
+MCP published a breaking revision. The review is quarterly, its outcome and next due date live in
+`references/external-spec-status.md`, and any session that notices a version move may hold it early
+and record the result there. A mismatch found by that review triggers `evolution_review`. Wiring an
+automatic fetch is deferred on purpose: a network call inside a portable skill is a runtime
+dependency this skill does not otherwise carry.
 
 ### Breaking Change Response
 - Patch (compatible): auto-apply and update pin.

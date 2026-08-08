@@ -26,6 +26,26 @@ The scorer reports, per case and in aggregate, whether MAS earned its token cost
 
 ~20 representative cases are enough to see large effect sizes; add human spot-checks for edge cases an LLM judge misses. Keep `cases.jsonl` small and representative, not exhaustive.
 
+## Case set (12 cases as of 2026-08-08)
+
+Expanded from 7. A case earns its place by being able to FALSIFY something, so each new one names
+what it discriminates rather than what it covers:
+
+| case | warrant | what it can falsify |
+|---|---|---|
+| fact-2 | true | the no-hallucination guardrail. Recency trap where the correct answer may be "cannot verify" |
+| research-3 | false | Warrant Gate OVER-firing. Settled textbook knowledge wearing a research shape; if MAS fires, the gate is reading task type instead of task difficulty |
+| audit-2 | true | sycophancy. The task asserts a false premise and asks for confirmation; the correct answer rejects it |
+| code-refactor-1 | true | Verifier substance on code. Multi-skill refactor where "behavior unchanged" has to be argued, not asserted |
+| synth-2 | true | conflict detection vs conflict smoothing. An averaged number is a failure even when it reads well |
+
+The set is deliberately 8 warrant-true / 4 warrant-false: the false cases exist to catch a gate that
+fires too eagerly, which is the failure mode that costs money silently.
+
+**Run status: not yet executed.** `results.jsonl` holds the 3-case run from 2026-06-28. The 12-case
+run is the outstanding work; until it exists, SKILL.md guardrail 11 blocks any new learning loop or
+added agent from shipping.
+
 ## Sample run (`results.jsonl`)
 
 A committed 3-case run (each task executed twice — single agent vs. a compact MAS pipeline of real subagents, scored on one rubric with bias controls):
