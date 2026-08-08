@@ -62,9 +62,50 @@ python eval/validate_cases.py            # every case runnable? (also in CI)
 python eval/validate_cases.py --selftest
 ```
 
-**Run status: not yet executed.** `results.jsonl` holds the 3-case run from 2026-06-28. All 12 cases
-are runnable as of 2026-08-08; the run itself is the outstanding work, and until it exists SKILL.md
-guardrail 11 blocks any new learning loop or added agent from shipping.
+## Run 2026-08-08 - the four warrant=false cases
+
+One run per file. `results.jsonl` is the current run; `results-2026-06-28.jsonl` is the earlier one.
+They are NOT merged, because the scorer keys on `case_id` alone and would silently combine two cases
+of the same name measured under different conditions - which it did once before this split.
+
+| case | single | mas | gain | tokens | verdict |
+|---|---|---|---|---|---|
+| fact-1 | 4.5 | 4.5 | +0.0 | 2.03x | single_sufficient |
+| rewrite-1 | 3.8 | 4.6 | +0.8 | 2.05x | **mas_worth_it** |
+| code-small-1 | 4.4 | 4.8 | +0.4 | 2.11x | single_sufficient |
+| research-3 | 4.3 | 4.8 | +0.5 | 2.23x | **mas_worth_it** |
+
+**The Warrant Gate's cost premise does not hold on this harness.** SKILL.md justifies single-agent-by-
+default with "~15x the tokens". Measured here the compact pipeline costs **2.03x to 2.23x**, because a
+sub-agent's base context is roughly 50,000 tokens before it does any work, and that floor dominates
+everything else. The same fact-1 case cost 25,313 tokens as a single agent in June and 50,125 in
+August with no change to the task. At 2x rather than 15x, a verification pass is cheap and "is this
+worth a second agent" has a different answer than the gate assumes.
+
+Read that narrowly. This measured a **2-agent** Worker plus Verifier chain, not the 8-agent pipeline.
+Eight agents at a ~50k floor each would land far closer to the original 15x, so the finding supports
+cheap verification, not the full pipeline.
+
+**Two warrant=false cases were won by MAS, and the gate is not what was wrong.** The README rule says
+a MAS win on a warrant=false case means the gate is mis-sized. Here the Verifier earned it on merit:
+in `rewrite-1` the single agent silently strengthened a condition ("stating which fields are missing"
+where the source only says fields are missing) and nobody caught it, while the Verifier did; in
+`research-3` it caught three real errors in a confident answer - the 1986 collapse was the LBL to UC
+Berkeley path and not NSFNET, the RTO doubling is RFC 6298 §5.5 rather than Karn's algorithm, and the
+Chiu-Jain result is scoped to linear controls. Settled-knowledge questions are exactly where a
+confident single agent misattributes, so "cost of being wrong" may be the warrant signal that matters
+rather than task type.
+
+**Judge limitation, stated rather than implied**: scoring was done by the session model knowing which
+arm produced which answer. That is a bias in MAS's favour on the two cases where the Verifier's catch
+is the whole difference. A blind re-score is the correction, and it has not been done.
+
+**Outstanding**: the eight warrant=true cases have not been run. `code-small-1`'s fixture does not
+actually raise on a None name - the `if p` filter is evaluated before `p.strip()` - so the case
+accidentally became a second false-premise test rather than the surgical-edit test it was meant to
+be, and both arms correctly rejected the premise. It needs either a fixture that really raises or an
+honest reclassification. Until the full run exists, SKILL.md guardrail 11 still blocks any new
+learning loop or added agent from shipping.
 
 ## Sample run (`results.jsonl`)
 

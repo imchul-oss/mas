@@ -1,0 +1,6 @@
+{"case_id": "fact-1", "mode": "single", "passed": true, "overall_score": 4.5, "tokens": 25313, "tool_calls": 0}
+{"case_id": "fact-1", "mode": "mas", "passed": true, "overall_score": 4.5, "tokens": 50742, "agents_fired": ["researcher", "verifier"], "tool_calls": 0}
+{"case_id": "research-1", "mode": "single", "passed": true, "overall_score": 4.2, "tokens": 32176, "tool_calls": 3}
+{"case_id": "research-1", "mode": "mas", "passed": true, "overall_score": 4.5, "tokens": 92981, "agents_fired": ["researcher_a", "researcher_b", "verifier"], "tool_calls": 6}
+{"case_id": "research-2", "mode": "single", "passed": true, "overall_score": 4.0, "tokens": 35827, "tool_calls": 5}
+{"case_id": "research-2", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 102007, "agents_fired": ["researcher_a", "researcher_b", "verifier"], "tool_calls": 12}

@@ -1,6 +1,8 @@
-{"case_id": "fact-1", "mode": "single", "passed": true, "overall_score": 4.5, "tokens": 25313, "tool_calls": 0}
-{"case_id": "fact-1", "mode": "mas", "passed": true, "overall_score": 4.5, "tokens": 50742, "agents_fired": ["researcher", "verifier"], "tool_calls": 0}
-{"case_id": "research-1", "mode": "single", "passed": true, "overall_score": 4.2, "tokens": 32176, "tool_calls": 3}
-{"case_id": "research-1", "mode": "mas", "passed": true, "overall_score": 4.5, "tokens": 92981, "agents_fired": ["researcher_a", "researcher_b", "verifier"], "tool_calls": 6}
-{"case_id": "research-2", "mode": "single", "passed": true, "overall_score": 4.0, "tokens": 35827, "tool_calls": 5}
-{"case_id": "research-2", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 102007, "agents_fired": ["researcher_a", "researcher_b", "verifier"], "tool_calls": 12}
+{"case_id": "fact-1", "mode": "single", "passed": true, "overall_score": 4.5, "tokens": 50125, "tool_calls": 0}
+{"case_id": "fact-1", "mode": "mas", "passed": true, "overall_score": 4.5, "tokens": 101899, "agents_fired": ["worker", "verifier"], "tool_calls": 0}
+{"case_id": "rewrite-1", "mode": "single", "passed": true, "overall_score": 3.8, "tokens": 50160, "tool_calls": 0}
+{"case_id": "rewrite-1", "mode": "mas", "passed": true, "overall_score": 4.6, "tokens": 103022, "agents_fired": ["worker", "verifier"], "tool_calls": 0}
+{"case_id": "code-small-1", "mode": "single", "passed": true, "overall_score": 4.4, "tokens": 54056, "tool_calls": 2}
+{"case_id": "code-small-1", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 114206, "agents_fired": ["worker", "verifier"], "tool_calls": 5}
+{"case_id": "research-3", "mode": "single", "passed": true, "overall_score": 4.3, "tokens": 55027, "tool_calls": 0}
+{"case_id": "research-3", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 122471, "agents_fired": ["worker", "verifier"], "tool_calls": 7}
