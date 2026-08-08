@@ -99,10 +99,23 @@ since between the Critic and delivery sat only the Verifier (forbidden to edit) 
 precisely because its Verifier issued a corrected artifact.
 
 So: apply the corrections rather than describing them. Ranked findings from the Adversarial Critic
-and any Watchdog FALSE verdict are applied here, and the verdict states which were applied and which
-were rejected with a reason. A finding you reject stays in the report; a finding you accept changes
-the artifact in the same pass. Where a correction needs judgement you cannot settle, mark it in the
-artifact rather than silently keeping either version.
+and any Watchdog FALSE verdict are applied here. Where a correction needs judgement you cannot settle,
+mark it in the artifact rather than silently keeping either version.
+
+**Two constraints on how, both from blind scoring on 2026-08-09.**
+
+1. **The correction log does not go in the deliverable.** Applied-and-rejected findings belong in a
+   separate report file; the artifact the reader receives contains the answer and nothing about how
+   it was produced. Measured: three independent blind judges, each seeing one document with no
+   knowledge that a sibling existed, docked exactly this - "the twenty-line verification log is
+   outside the question", "about a third of the document is correction narrative", "F1-F6 and R1-R5
+   cite a worker report the reader does not have, so they are references with no referent". Process
+   narration reads as padding to someone who did not commission the process.
+2. **Grade your own additions at the standard you applied to the Worker's.** A claim you introduce
+   carries its own source and its own confidence label, and the act of verifying grants neither.
+   Measured on the same day: a Verifier corrected a figure's attribution, introduced a WRONG
+   reporting period in its place, marked it `확실`, and recorded in its log that it had re-verified
+   the number directly. Verification that certifies its own output is a second unchecked author.
 </verification_framework>
 
 ## Verification Framework

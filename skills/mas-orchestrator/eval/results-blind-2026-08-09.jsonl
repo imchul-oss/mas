@@ -1,0 +1,8 @@
+{"case_id": "research-1", "mode": "single", "passed": true, "overall_score": 4.8, "tokens": 83970, "judge": "blind-absolute"}
+{"case_id": "research-1", "mode": "mas", "passed": true, "overall_score": 4.4, "tokens": 156224, "agents_fired": ["worker", "verifier"], "judge": "blind-absolute"}
+{"case_id": "fact-2", "mode": "single", "passed": true, "overall_score": 4.8, "tokens": 68702, "judge": "blind-absolute"}
+{"case_id": "fact-2", "mode": "mas", "passed": true, "overall_score": 4.6, "tokens": 147662, "agents_fired": ["worker", "verifier"], "judge": "blind-absolute"}
+{"case_id": "code-refactor-1", "mode": "single", "passed": true, "overall_score": 4.8, "tokens": 106133, "judge": "blind-absolute"}
+{"case_id": "code-refactor-1", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 203590, "agents_fired": ["worker", "verifier"], "judge": "blind-absolute"}
+{"case_id": "research-2", "mode": "single", "passed": true, "overall_score": 4.2, "tokens": 88735, "judge": "blind-absolute"}
+{"case_id": "research-2", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 184175, "agents_fired": ["worker", "verifier"], "judge": "blind-absolute"}

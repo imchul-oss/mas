@@ -132,7 +132,41 @@ different question than the one it asks: not "is this task type hard" and not ev
 high", but "how expensive is an occasional wrong answer here". Both audits are load-bearing outputs
 where one bad fix ships; both syntheses are analyses a reader would sanity-check anyway.
 
-**Judge limitation, stated rather than implied**: scoring was done by the session model knowing which
+## Run 2026-08-09 - blind scoring, and the three remaining warrant-true cases
+
+The judge bias flagged in every earlier run is corrected here. Each artifact was graded by its own
+judge, **one document per judge, absolute rubric, no knowledge that a sibling arm existed** -
+comparison bias cannot operate on a judge with nothing to compare. Role markers were stripped from
+the artifacts first (`blind_key.json` holds the mapping). Rubric: accuracy, evidence discipline,
+completeness, internal consistency, usability, each 1-5, mean reported.
+
+| case | single | pair | delta | pair cost |
+|---|---|---|---|---|
+| research-1 | **4.8** | 4.4 | -0.4 | 1.86x |
+| fact-2 | **4.8** | 4.6 | -0.2 | 2.15x |
+| code-refactor-1 | 4.8 | 4.8 | +0.0 | 1.92x |
+| research-2 | 4.2 | **4.7** | +0.5 | 2.08x |
+
+**On three of four the pair did not beat the single agent, and on two it scored lower.** The pair is
+worth its 2x on a minority of tasks; elsewhere it is 2x for nothing or for a deficit.
+
+Two failure modes made the deficits, and both are fixed in v2.6.0:
+
+1. **A verification pass can introduce an error and certify it.** In research-1 the Verifier
+   corrected a figure's attribution, put a wrong reporting period in its place (a full-year total
+   labelled as Q4), graded it `확실`, and recorded in its own log that it had re-verified the number
+   directly. The grading system that should have caught the error blessed it instead.
+2. **A correction log inside the deliverable reads as padding.** Three judges independently docked
+   it: "the twenty-line verification log is outside the question", "about a third of the document is
+   correction narrative", "F1-F6 and R1-R5 cite a worker report the reader does not have". The
+   instruction that produced this was added in v2.5.0 the day before, which is how fast an
+   improvement can become a defect without a blind reader.
+
+**Calibration of my own scores.** research-2 is the one case scored both ways: self-scored 4.4 / 4.8
+/ 4.1 (single / pair / full) against blind 4.2 / 4.7 / 4.2. The ranking survived; the margins were
+mine, and the full arm was the one I under-scored.
+
+**Judge limitation of the EARLIER runs, stated rather than implied**: scoring was done by the session model knowing which
 arm produced which answer. That is a bias in MAS's favour on the two cases where the Verifier's catch
 is the whole difference. A blind re-score is the correction, and it has not been done.
 

@@ -1,6 +1,6 @@
 # MAS Orchestrator Plugin
 
-**v2.5.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
+**v2.6.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
 
 This skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. As of 2.2.0 that gate is calibrated on measurement rather than on a cited figure — a Worker+Verifier pair costs **1.8x-2.2x** a single agent on this runtime, not the ~15x that describes a deep many-agent research run, because a sub-agent carries ~50,000 tokens of base context before doing any work. What that ~2x buys is **variance reduction, not capability**: across the measured cases the single agent found every planted trap, and the pipeline won only where a Verifier caught the first agent's own error. So the gate asks how expensive an occasional wrong answer is, not what type of task it is. Design is grounded in 2025-2026 research (Anthropic context-engineering / multi-agent, Berkeley MAST, GEPA, ThinkPRM, OTel-GenAI), and complexity is held accountable by the `eval/` harness rather than asserted.
 
