@@ -103,9 +103,9 @@ write separate SECTIONS, and only sometimes a reason to spawn separate AGENTS.
 | Researcher | Information collection + Memory API + dynamic Tier | Fact verification / task execution |
 | Watchdog (Pool) | Fact verdicts (TRUE / FALSE) | Information collection / quality scoring |
 | Worker (Pool) | Task execution + skill delegation + handoff | Process design / verification |
-| Adversarial Critic | Proactive adversarial verification (counter-scenarios) | Direct edits |
-| Polisher | Linguistic polish (fact-preserving) | Altering facts or conclusions |
-| Verifier | QA + 9-dim rubric | Direct edits |
+| Adversarial Critic | Proactive adversarial verification (counter-scenarios) | Direct edits - its findings route to the Verifier, which applies them |
+| Polisher | Linguistic polish (fact-preserving), Phase 4.5 after corrections land | Altering facts or conclusions |
+| Verifier | QA + 9-dim rubric, **and authorship of the corrected final artifact** | Inventing content the evidence base does not carry |
 
 ### 2. State-based Communication
 Agents do not communicate directly. They exchange asynchronous messages via `state/*.json`. Inter-agent review/debate/peer-review rounds live in `agent_messages.json`.
@@ -131,17 +131,25 @@ All `agents/*.md`, `references/*.md`, `SKILL.md`, and Worker natural-language ou
 
 ### Normal Flow
 ```
-Phase 0: Init -> Phase 0.5: Complexity -> Phase 1: Prompt Architect (Complex/Expert)
-  -> Phase 2: PM (Worker Pool + Watchdog Pool + Adversarial + Polisher decisions)
-  -> Phase 3a: Researcher (Memory import, async)
-  -> Phase 3b: Watchdog Pool (debate)
+Phase 0: Init -> Phase 0.5: Complexity -> Phase 1: Prompt Architect (Expert, on trigger)
+  -> Phase 2: PM (light by default)
+  -> Phase 3a: Researcher (on trigger; Memory import, async)
+  -> Phase 3b: Watchdog Pool (on trigger; one named AXIS per instance)
   -> Phase 3c: Worker Pool (handoff, schema, budget)
-  -> Phase 3c.5: Adversarial Critic (Complex/Expert)
-  -> Phase 3c.7: Polisher (Moderate+, fact-preserving)
-  -> Phase 4: Verifier (9-dim rubric + xml_parser)
+  -> Phase 3c.5: Adversarial Critic (on trigger)
+  -> Phase 4: Verifier - re-derivation, applies Critic and Watchdog findings,
+              AUTHORS the corrected final artifact
+  -> Phase 4.5: Polisher (on trigger, fact-preserving, after corrections land)
   -> Phase 5: Feedback loop (optional, with checkpoint rollback)
   -> Phase 6: Final + Memory export
 ```
+
+**Authorship rule.** Every findings-producing phase must have an author downstream of it, or be one
+itself. Polisher moved 3c.7 -> 4.5 under the same rule: polishing before corrections land polishes
+the uncorrected artifact. This is the fix for the ordering defect measured on 2026-08-08, and it adds
+no agent - it withdraws a constraint, which is why guardrail 11 does not require a fresh eval for it.
+The pair arm, whose Verifier already authored its corrected output, is the configuration that scored
+highest of the three.
 
 ### Federation Flow
 ```

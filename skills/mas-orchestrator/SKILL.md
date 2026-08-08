@@ -95,7 +95,7 @@ So the pipeline raises the FLOOR, not the ceiling. What ~2x buys is variance red
 
 **Tested 2026-08-08 on the case most favourable to the pipeline.** `research-2` - the one case the June run scored `mas_worth_it`, needing external material, parallel decomposition and evidence grading - was run three ways: single 4.4 at 88,735 tokens, pair **4.8** at 184,175 (2.08x), full 10-agent Complex spec **4.1** at 1,253,663 (14.13x). The full spec cost 6.81x the pair, scored lower, and did not converge - its own Verifier returned CONDITIONAL_PASS 3.22/5 with a blocking defect, so a shippable artifact needs a Phase 5 pass on top of the 1.25M.
 
-**And the reason is an ordering defect, not weak agents.** The Watchdog Pool's corrections landed, because the Worker reads them and is the author. The Critic's did not: it caught a false claim, and nothing downstream can act on one, since the Verifier makes no direct edits and the Polisher never alters facts. The deliverable shipped that claim at Established grade while self-reporting zero propagated false verdicts. **A phase that produces findings after the last agent able to edit the artifact is speculative work.** Before escalating past the pair, check that every phase you add still has an author downstream of it.
+**And the reason is an ordering defect, not weak agents.** The Watchdog Pool's corrections landed, because the Worker reads them and is the author. The Critic's did not: it caught a false claim, and nothing downstream can act on one, because at the time the Verifier was forbidden to edit and the Polisher may not alter facts. The deliverable shipped that claim at Established grade while self-reporting zero propagated false verdicts. **A phase that produces findings after the last agent able to edit the artifact is speculative work.** That is fixed as of this version - the Verifier now authors the corrected artifact and the Polisher moved behind it - and the rule generalises: before adding any phase, check it still has an author downstream of it.
 </mas_warrant_gate>
 
 ## Cost & Context Strategy
@@ -156,22 +156,30 @@ USER REQUEST
    | conflict detection
    | -> GATE: worker_conflict_resolution
    |
-[Phase 3c.5: Adversarial Critic] (Complex/Expert)
+[Phase 3c.5: Adversarial Critic] (on trigger) -- findings route to Phase 4, which can act on them
    |
-[Phase 3c.7: Polisher] (Moderate+) -- fact-preserving polish
-   |
-[Phase 4: Verifier]
+[Phase 4: Verifier] -- THE AUTHOR OF THE FINAL ARTIFACT
+   |- Worker-Output Re-Derivation
    |- Watchdog Pool synthesis
-   |- Adversarial input integration
+   |- Adversarial input integration -- and the corrections are APPLIED here
    |- Schema compliance
-   |- Polisher metrics
    |- context_architecture_compliance
+   |- emits the corrected final artifact, not only a verdict
    | -> GATE: phase_4_verification_result
+   |
+[Phase 4.5: Polisher] (on trigger) -- fact-preserving polish, AFTER corrections land
    |
 [Phase 5: Feedback Loop] (if needed) + checkpoint rollback
    |
 [Phase 6: Final + Memory API export]
 ```
+
+**Authorship rule (2026-08-08, from the `research-2` full-spec run).** Every phase that produces
+findings must have an author downstream of it, or be one itself. The Polisher moved from 3c.7 to 4.5
+for the same reason: polishing before the corrections land means the polished artifact is the
+uncorrected one, and the agent that finds the error afterwards cannot fix it. In the measured run the
+Critic correctly identified a false claim and the deliverable shipped it at Established grade,
+because between 3c.5 and delivery sat only two agents forbidden to touch facts.
 </agent_architecture>
 
 ## Execution Protocol

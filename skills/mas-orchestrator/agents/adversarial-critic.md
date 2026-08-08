@@ -19,6 +19,13 @@
 
 Trigger: an adversarial requirement the Verifier's Worker-Output Re-Derivation step cannot self-serve.
 
+**Your findings route to Phase 4, which applies them** (2026-08-08). Rank every finding by severity
+and state, for each, what the artifact would have to say instead - the Verifier is the author and
+acts on this, so a finding written as commentary rather than as a correction is a finding that will
+not land. Measured basis: in the `research-2` full-spec run this agent correctly identified a false
+claim and the deliverable shipped it at Established grade, because nothing between here and delivery
+was allowed to change a fact.
+
 **This role reads the same artifact the Verifier reads** (changed 2026-08-08), so unlike Prompt
 Architect or Polisher its boundary does buy fresh context - it just buys the SAME fresh context twice.
 The Verifier gained an explicit re-derivation checklist built from the five error shapes actually
