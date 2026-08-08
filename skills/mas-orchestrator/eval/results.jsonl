@@ -6,3 +6,11 @@
 {"case_id": "code-small-1", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 114206, "agents_fired": ["worker", "verifier"], "tool_calls": 5}
 {"case_id": "research-3", "mode": "single", "passed": true, "overall_score": 4.3, "tokens": 55027, "tool_calls": 0}
 {"case_id": "research-3", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 122471, "agents_fired": ["worker", "verifier"], "tool_calls": 7}
+{"case_id": "audit-1", "mode": "single", "passed": true, "overall_score": 4.2, "tokens": 54682, "tool_calls": 0}
+{"case_id": "audit-1", "mode": "mas", "passed": true, "overall_score": 4.8, "tokens": 117376, "agents_fired": ["worker", "verifier"], "tool_calls": 2}
+{"case_id": "audit-2", "mode": "single", "passed": true, "overall_score": 4.3, "tokens": 70445, "tool_calls": 12}
+{"case_id": "audit-2", "mode": "mas", "passed": true, "overall_score": 4.9, "tokens": 128942, "agents_fired": ["worker", "verifier"], "tool_calls": 18}
+{"case_id": "synth-1", "mode": "single", "passed": true, "overall_score": 4.6, "tokens": 54147, "tool_calls": 0}
+{"case_id": "synth-1", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 110967, "agents_fired": ["worker", "verifier"], "tool_calls": 0}
+{"case_id": "synth-2", "mode": "single", "passed": true, "overall_score": 4.7, "tokens": 55642, "tool_calls": 0}
+{"case_id": "synth-2", "mode": "mas", "passed": true, "overall_score": 4.7, "tokens": 110957, "agents_fired": ["worker", "verifier"], "tool_calls": 0}

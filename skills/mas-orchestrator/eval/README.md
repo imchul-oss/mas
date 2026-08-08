@@ -96,6 +96,42 @@ Chiu-Jain result is scoped to linear controls. Settled-knowledge questions are e
 confident single agent misattributes, so "cost of being wrong" may be the warrant signal that matters
 rather than task type.
 
+## Run 2026-08-08 part 2 - the four cases with planted ground truth
+
+These four were run second because they are the ones whose right answer is fixed in the fixture
+rather than decided by a judge's taste, which is the correction to the bias noted below.
+
+| case | single | mas | gain | tokens | verdict |
+|---|---|---|---|---|---|
+| audit-1 | 4.2 | 4.8 | +0.6 | 2.15x | **mas_worth_it** |
+| audit-2 | 4.3 | 4.9 | +0.6 | 1.83x | **mas_worth_it** |
+| synth-1 | 4.6 | 4.7 | +0.1 | 2.05x | single_sufficient |
+| synth-2 | 4.7 | 4.7 | +0.0 | 1.99x | single_sufficient |
+
+**Both arms found every planted trap.** The single agent rejected audit-2's false premise (and went
+as far as installing a free-threading interpreter to measure the race), picked synth-2's 186 GW and
+identified source C as a category error, caught synth-1's double-count and even solved for the hidden
+fourth forecast, and found every planted defect in audit-1. Nothing in this batch was won by MAS
+noticing something the single agent missed in the fixture.
+
+**MAS won where a SECOND look at the first agent's own output was needed.** In audit-2 the Worker
+proposed a per-instance `threading.Lock` for state held on a class attribute, and the Verifier
+measured that fix failing (10,738 of 40,000 when each thread holds its own instance) before replacing
+it. In audit-1 the Verifier added three findings the Worker missed, including that a 32-bit reset
+token is brute-forceable even after the seeding bug is fixed, and it found a second independent
+trigger for the fail-open path. In synth-2 the Worker got `186 x 1.04` wrong as a 186-195 range and
+overstated an arithmetic tension as an internal contradiction; the Verifier corrected both. In
+synth-1 the Worker discarded the recoverable fourth forecast and set a floor that contradicted its
+own bias argument.
+
+**So the pipeline raises the floor, it does not raise the ceiling.** The two cases MAS did not win
+are the two where the single agent simply did not make a mistake for a Verifier to catch - and note
+that in synth-2 the single agent got the arithmetic right that the MAS Worker got wrong. What is
+being bought at roughly 2x is variance reduction, not capability. That points the Warrant Gate at a
+different question than the one it asks: not "is this task type hard" and not even "are the stakes
+high", but "how expensive is an occasional wrong answer here". Both audits are load-bearing outputs
+where one bad fix ships; both syntheses are analyses a reader would sanity-check anyway.
+
 **Judge limitation, stated rather than implied**: scoring was done by the session model knowing which
 arm produced which answer. That is a bias in MAS's favour on the two cases where the Verifier's catch
 is the whole difference. A blind re-score is the correction, and it has not been done.
