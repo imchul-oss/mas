@@ -90,4 +90,5 @@ jobs:
           python -m unittest discover -s eval -p "test_*.py" -v
           python eval/validate_cases.py --selftest
           python eval/validate_cases.py
+          python eval/variance_gate.py --selftest
           python eval/scorer.py

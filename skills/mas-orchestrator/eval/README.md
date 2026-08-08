@@ -132,6 +132,52 @@ different question than the one it asks: not "is this task type hard" and not ev
 high", but "how expensive is an occasional wrong answer here". Both audits are load-bearing outputs
 where one bad fix ships; both syntheses are analyses a reader would sanity-check anyway.
 
+## RETRACTION 2026-08-09 - every mean-comparison verdict below is withdrawn
+
+Judge variance was measured last, and it should have been measured first. Four independent judges,
+identical prompts, over the same two documents:
+
+| document | judge scores | mean | sd |
+|---|---|---|---|
+| research-1 single | 4.8, 4.1, 4.8, 4.2 | 4.475 | **0.377** |
+| research-1 pair | 4.4, 4.4, 4.4, 4.6 | 4.450 | **0.100** |
+
+The delta of means is **+0.025**. The single-replicate reading of the same pair, taken hours earlier,
+was 4.8 against 4.4 and reported as a 0.4-point deficit for the pair. That 0.4 was one draw of the
+judge. Pooled sd is 0.276, so the standard error of an n=1 difference is 0.391 and nothing under about
+0.77 is resolvable at n=1. **Eleven of the twelve deltas this programme recorded are inside that
+floor**, and the twelfth (rewrite-1, +0.8) was self-scored rather than blind. `mas_worth_it` counts
+computed from those deltas do not mean what they appear to mean.
+
+### What the same measurement DID establish
+
+The two arms' averages are indistinguishable and their spreads are not: **0.377 against 0.100, a
+3.8x collapse in variance.** The verification pass does not raise the average answer, it removes the
+bad tail - which is what "raises the floor, not the ceiling" means once it is measured instead of
+asserted, and it is the first claim in this programme that survives its own noise.
+
+The mechanism is visible in the judges' own comments. The single-agent document contains a real error:
+it states in three places, graded `확실`, that Signal offers no cloud backup, which stopped being true
+when Signal Secure Backups shipped 2025-09-08. Two of four judges found it and marked accuracy down to
+3.5-4; two missed it and gave 5. Its score therefore depends on judge luck. The pair's Verifier had
+already caught and corrected that claim, so all four judges converged on the same residual defects.
+**Buying a verification pass buys predictability, not a better average.**
+
+### Harness fix
+
+`variance_gate.py` refuses a verdict rather than issuing a weak one - `UNRESOLVED` is the correct
+output at n=1, and a quiet pass is how this went unnoticed for six weeks.
+
+```bash
+python eval/variance_gate.py --results eval/results.jsonl   # exit 1 if any verdict is unsupported
+python eval/variance_gate.py --selftest
+```
+
+A future run needs at least 3 judge replicates per arm. Everything below is retained as data, not as
+findings.
+
+---
+
 ## Run 2026-08-09 - blind scoring, and the three remaining warrant-true cases
 
 The judge bias flagged in every earlier run is corrected here. Each artifact was graded by its own
