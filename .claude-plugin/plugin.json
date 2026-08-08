@@ -1,6 +1,6 @@
 {
   "name": "mas-orchestrator",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "Production-grade Multi-Agent System (MAS) orchestrator. 8 specialized agents (Prompt Architect, PM, Researcher, Watchdog Pool, Worker, Adversarial Critic, Polisher, Verifier) collaborate through a research, fact-check, execution, QA pipeline with proportional response, hallucination control, and structured output.",
   "author": {
     "name": "ImFe"

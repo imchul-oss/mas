@@ -32,6 +32,13 @@ from pathlib import Path
 # Measured 2026-08-09, research-1, 4 independent judges per arm, identical prompts.
 MEASURED_POOLED_SD = 0.276
 
+# Zero observed spread at n=3 does not mean zero true spread. Measured 2026-08-09:
+# code-refactor-1 returned 4.8 three times in BOTH arms, which drove the threshold to
+# 0.00 and would have let any nonzero delta through on a spuriously certain variance.
+# Scores are recorded on a 0.1 grid, so one grid step is the smallest spread that can
+# be claimed honestly.
+SD_FLOOR = 0.1
+
 
 def _se_of_delta(a, b):
     """Welch standard error from the OBSERVED spreads when replicates exist.
@@ -44,8 +51,8 @@ def _se_of_delta(a, b):
     errors out. A gate calibrated on the noisiest case rejects real results everywhere
     else; measure the arms you actually have.
     """
-    var_a = st.variance(a) if len(a) > 1 else MEASURED_POOLED_SD ** 2
-    var_b = st.variance(b) if len(b) > 1 else MEASURED_POOLED_SD ** 2
+    var_a = max(st.variance(a), SD_FLOOR ** 2) if len(a) > 1 else MEASURED_POOLED_SD ** 2
+    var_b = max(st.variance(b), SD_FLOOR ** 2) if len(b) > 1 else MEASURED_POOLED_SD ** 2
     return (var_a / max(len(a), 1) + var_b / max(len(b), 1)) ** 0.5
 
 
@@ -120,6 +127,13 @@ def _selftest():
         write([{"case_id": "t", "mode": "single", "overall_score": v} for v in (4.4, 4.4, 4.4, 4.6)] +
               [{"case_id": "t", "mode": "mas", "overall_score": v} for v in (4.6, 4.8, 4.8, 4.7)])
         assert analyse(p)[0][0]["verdict"] == "RESOLVED", analyse(p)[0]
+
+        # identical scores in both arms must NOT drive the threshold to zero
+        write([{"case_id": "f", "mode": "single", "overall_score": 4.8} for _ in range(3)] +
+              [{"case_id": "f", "mode": "mas", "overall_score": 4.9} for _ in range(3)])
+        row = analyse(p)[0][0]
+        assert row["threshold"] > 0.1, row
+        assert row["verdict"] == "UNRESOLVED", row
 
         # an arm missing entirely is skipped, not crashed
         write([{"case_id": "w", "mode": "single", "overall_score": 4.0}])

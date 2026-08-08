@@ -132,6 +132,37 @@ different question than the one it asks: not "is this task type hard" and not ev
 high", but "how expensive is an occasional wrong answer here". Both audits are load-bearing outputs
 where one bad fix ships; both syntheses are analyses a reader would sanity-check anyway.
 
+## Replicated run 2026-08-09 - the programme's central question, finally at n>=3
+
+Three cases, both conditions, independent judges per document, canonical prompt.
+
+| case | single mean (sd) | pair mean (sd) | delta | gate |
+|---|---|---|---|---|
+| research-1 | 4.475 (0.377) | 4.450 (0.100) | -0.025 | UNRESOLVED |
+| fact-2 | 4.650 (0.191) | 4.800 (0.000) | +0.150 | UNRESOLVED |
+| code-refactor-1 | 4.800 (0.000) | 4.800 (0.000) | +0.000 | UNRESOLVED |
+
+**The pair does not beat the single agent on the mean, in any of three cases, at n=3-4.** That is the
+answer to the question this eval was built for, and it is the opposite of what every n=1 reading
+suggested in either direction.
+
+**What does hold is the variance, in all three cases**: pair sd <= single sd, 0.100 vs 0.377,
+0.000 vs 0.191, 0.000 vs 0.000. And the mechanism predicts the pattern rather than being fitted to
+it - spread comes from discoverable errors, so it is largest where the single artifact carries one
+(research-1 asserts Signal has no cloud backup, false since 2025-09-08, and judges split on finding
+it), smaller where it carries a minor one, and zero where both artifacts are clean and executable
+(code-refactor-1, where judges can run the code). Verification buys the tail, not the average.
+
+Two of three comparisons are 0.000 against 0.000, which carries no information about variance
+reduction; the claim rests on research-1 and fact-2.
+
+### Gate defect found by this run
+
+With both arms scoring identically at n=3, the observed sd is 0.000 and the threshold collapsed to
+0.00 - any nonzero delta would have passed on a spuriously certain variance. Zero observed spread at
+n=3 is not zero true spread. `SD_FLOOR = 0.1`, one step of the score grid, is now the smallest
+spread the gate will believe, and the case is pinned in `--selftest`.
+
 ## Every cost figure here is NOMINAL tokens, not billed cost (2026-08-09)
 
 Read the ratios below with this attached. `subagent_tokens` is a nominal count: four byte-identical
