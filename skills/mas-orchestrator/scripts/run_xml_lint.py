@@ -39,6 +39,11 @@ import xml_parser as xp
 
 def doc_type_resolver(p):
     """Determine document type based on path."""
+    if "_legacy" in p.parts:
+        # Retired material is not the live contract, so it is not held to the contract's
+        # tag convention. Added 2026-08-09 when six agent definitions moved to _legacy and
+        # the retirement note itself was failed as a malformed agent definition.
+        return None
     if "agents" in p.parts and p.suffix == ".md":
         return "agent_definition"
     if p.name == "SKILL.md":

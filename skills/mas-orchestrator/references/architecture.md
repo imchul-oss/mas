@@ -2,7 +2,7 @@
 
 ## System Architecture Overview
 <protocol_definition>
-Integrated 8-agent system with Context Architecture (XML tag convention).
+Two roles - Worker, then Verifier - inside the XML tag convention. Six further roles were retired 2026-08-09; see `_legacy/agents/README.md`.
 </protocol_definition>
 
 ## Cost Structure (measured 2026-08-08)
@@ -98,14 +98,12 @@ write separate SECTIONS, and only sometimes a reason to spawn separate AGENTS.
 
 | Agent | Single Responsibility | Never Does |
 |---|---|---|
-| Prompt Architect | Prompt optimization + XML tag wrapping | Direct task execution |
-| PM | Process and Worker Pool design + activation decisions | Information collection / task execution |
-| Researcher | Information collection + Memory API + dynamic Tier | Fact verification / task execution |
-| Watchdog (Pool) | Fact verdicts (TRUE / FALSE) | Information collection / quality scoring |
-| Worker (Pool) | Task execution + skill delegation + handoff | Process design / verification |
-| Adversarial Critic | Proactive adversarial verification (counter-scenarios) | Direct edits - its findings route to the Verifier, which applies them |
-| Polisher | Linguistic polish (fact-preserving), Phase 4.5 after corrections land | Altering facts or conclusions |
-| Verifier | QA + 9-dim rubric, **and authorship of the corrected final artifact** | Inventing content the evidence base does not carry |
+| Worker (Pool) | Task execution, evidence discipline, declaring its own gaps | Verifying its own output |
+| Verifier | Re-derivation, applying corrections, **authoring the corrected final artifact** | Inventing content the evidence base does not carry, or putting its correction log in the deliverable |
+
+Retired 2026-08-09 with the measurement that retired them, and with what each contributed folded into
+the two above: Prompt Architect, PM, Researcher, Watchdog, Adversarial Critic, Polisher. Definitions
+and restoration conditions in `_legacy/agents/`.
 
 ### 2. State-based Communication
 Agents do not communicate directly. They exchange asynchronous messages via `state/*.json`. Inter-agent review/debate/peer-review rounds live in `agent_messages.json`.
@@ -114,7 +112,7 @@ Agents do not communicate directly. They exchange asynchronous messages via `sta
 ```
 Fact accuracy > Task completion > Process efficiency
 ```
-Watchdog-FALSE information is unusable anywhere in the system (non-negotiable).
+A claim the Verifier rules false is unusable anywhere in the artifact (non-negotiable), and it is the Verifier that removes it, not a later role.
 
 ### 4. Continuous Learning
 Worker -> `process_policy.json` accumulation. Additional persistent stores: `source_reliability`, `calibration`, `cost_routing_history`.
@@ -131,22 +129,18 @@ All `agents/*.md`, `references/*.md`, `SKILL.md`, and Worker natural-language ou
 
 ### Normal Flow
 ```
-Phase 0: Init -> Phase 0.5: Complexity -> Phase 1: Prompt Architect (Expert, on trigger)
-  -> Phase 2: PM (light by default)
-  -> Phase 3a: Researcher (on trigger; Memory import, async)
-  -> Phase 3b: Watchdog Pool (on trigger; one named AXIS per instance)
-  -> Phase 3c: Worker Pool (handoff, schema, budget)
-  -> Phase 3c.5: Adversarial Critic (on trigger)
-  -> Phase 4: Verifier - re-derivation, applies Critic and Watchdog findings,
-              AUTHORS the corrected final artifact
-  -> Phase 4.5: Polisher (on trigger, fact-preserving, after corrections land)
-  -> Phase 5: Feedback loop (optional, with checkpoint rollback)
-  -> Phase 6: Final + Memory export
+Warrant Gate -> one agent if a wrong answer is cheap, stop
+  -> Phase 0: Init (optional state dir)
+  -> Phase 1: Worker (Pool 2-5 only when sub-tasks are independent and read different material)
+  -> Phase 2: Verifier - re-derivation, partitioned axes if the artifact is large,
+              applies corrections, AUTHORS the corrected final; log to a separate report
+  -> Phase 3: Feedback loop (only if the Verifier withheld a pass, max 3)
+  -> Final
 ```
 
 **Authorship rule.** Every findings-producing phase must have an author downstream of it, or be one
-itself. Polisher moved 3c.7 -> 4.5 under the same rule: polishing before corrections land polishes
-the uncorrected artifact. This is the fix for the ordering defect measured on 2026-08-08, and it adds
+itself. This is why the Verifier authors rather than judges, and it is the first test any phase must
+pass before it is added back. This is the fix for the ordering defect measured on 2026-08-08, and it adds
 no agent - it withdraws a constraint, which is why guardrail 11 does not require a fresh eval for it.
 The pair arm, whose Verifier already authored its corrected output, is the configuration that scored
 highest of the three.
@@ -165,10 +159,12 @@ FederationCoordinator (hub-spoke recommended)
 <integration_note>
 
 ### Horizontal (Worker Pool)
-PM dynamically allocates 1 to 5 Workers. Independent tasks spawn in parallel.
+1 to 5 Workers, and only when the sub-tasks are independent AND each instance reads different material.
 
-### Watchdog Pool
-For Complex/Expert, 3 parallel instances with majority consensus.
+### Partitioned axes (not a pool)
+When an artifact is too large for one re-derivation sweep, the Verifier names the axes and runs one
+pass per axis. Same reader, different attention. This replaced the Watchdog Pool and is the one thing
+that configuration measurably did well.
 
 ### Vertical (Skill Delegation)
 Worker calls docx / pptx / xlsx / data:* skills directly.
@@ -182,7 +178,7 @@ Multi-MAS instances (Hub-Spoke / Hierarchical / Peer-to-Peer / Swarm).
 
 ## Security & Integrity
 <integration_note>
-- Watchdog verdicts are immutable (no other agent can change them).
+- A Verifier finding is applied or rejected with a reason, never silently dropped.
 - Every state mutation records a timestamp (audit trail).
 - All factual claims require external verification.
 - File lock + atomic write prevents races.

@@ -8,7 +8,7 @@
       "name": "mas-orchestrator",
       "source": ".",
       "description": "Production-grade 8-agent Multi-Agent System orchestrator with proportional response, fact-checking, adversarial verification, and structured output.",
-      "version": "2.9.0",
+      "version": "3.0.0",
       "keywords": [
         "multi-agent",
         "orchestration",

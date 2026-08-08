@@ -1,6 +1,6 @@
 # MAS Orchestrator Plugin
 
-**v2.9.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
+**v3.0.0** · Production-grade 8-agent Multi-Agent System (MAS) orchestrator for Claude Code / Claude Desktop. One skill, no dependencies, headless-safe (Hermes/cron).
 
 This skill is **on-demand and self-gating**: even when triggered, a **Warrant Gate** (SKILL.md) drops to a single agent for tasks that don't justify the pipeline. As of 2.2.0 that gate is calibrated on measurement rather than on a cited figure — a Worker+Verifier pair costs **1.8x-2.2x** a single agent on this runtime, not the ~15x that describes a deep many-agent research run, because a sub-agent carries ~50,000 tokens of base context before doing any work. What that ~2x buys is **variance reduction, not capability**: across the measured cases the single agent found every planted trap, and the pipeline won only where a Verifier caught the first agent's own error. So the gate asks how expensive an occasional wrong answer is, not what type of task it is. Design is grounded in 2025-2026 research (Anthropic context-engineering / multi-agent, Berkeley MAST, GEPA, ThinkPRM, OTel-GenAI), and complexity is held accountable by the `eval/` harness rather than asserted.
 
@@ -81,24 +81,18 @@ This plugin is distributed as a Claude Code marketplace. Both local and GitHub i
 
 ---
 
-## 8-Agent Architecture
+## Architecture: two roles
 
-Two of the eight are the baseline; the rest are opt-in against a named trigger as of 2.3.0. "Boundary" is Design Principle 0: does spawning this agent change what is SEEN, or only what is ASKED.
+| Agent | Role | Boundary |
+|---|---|---|
+| **Worker (Pool)** | Produces the deliverable. Collects before writing, records what each source establishes, declares its gaps | Pool only, and only when sub-tasks are independent and each instance reads different material |
+| **Verifier** | Re-derives the Worker's output in fresh context, applies the corrections, **authors the corrected final artifact**. Correction log goes to a separate report | Yes - fresh context over the Worker's output |
 
-| # | Agent | Role | Activation | Boundary |
-|---|---|---|---|---|
-| 5 | **Worker (Pool)** | Task execution with handoff, structured output, token budget | **baseline** | Pool only: a different sub-task each |
-| 8 | **Verifier** | 10-dimension rubric QA + Worker-Output Re-Derivation, schema validation | **baseline** | Yes — fresh context over the Worker's output |
-| 3 | **Researcher** | Information collection with tiered source reliability | on trigger: material not already in context | Yes — external material |
-| 4 | **Watchdog** (Pool of 3 at Expert) | Fact verification via multi-agent debate | on trigger: contested factual base | No — claims already in context; 3 over one document are correlated votes |
-| 6 | **Adversarial Critic** | Proactive vulnerability discovery (counter-scenarios, edge cases) | on trigger at Complex, on at Expert | Fresh, but the same fresh context the Verifier takes |
-| 7 | **Polisher** | Linguistic polish (Korean style, terminology — fact-preserving) | on trigger: named audience + style contract | No — rewrites the Worker's prose |
-| 2 | **PM / Orchestrator** | Process design, Worker Pool, pool activation, federation routing | always, **light mode default**; may not spawn to decide a spawn | Partial |
-| 1 | **Prompt Architect** | User request → structured prompt + mandatory `<thinking>` block | on trigger at Expert only | No — same request, restructured for the same model |
+Six roles were retired on 2026-08-09: Prompt Architect, PM, Researcher, Watchdog, Adversarial Critic, Polisher. Not for being badly written - none had ever beaten a single-agent baseline on `eval/`, which guardrail 10 has required since v2.0.0, and the ten-agent configuration measured **14.13x the tokens for a lower score** while shipping a false claim its own Critic had caught. What was measured to work was folded in rather than lost: partitioned-axis reading into the Verifier, evidence discipline into the Worker. Definitions and the specific eval result that would restore each one are kept in `_legacy/agents/`.
 
----
+**Design Principle 0**: an agent boundary must change what is SEEN, not what is ASKED. A different instruction is a section in a prompt and costs nothing; a different context window costs ~50,000 tokens.
 
-## 10-Dimension Verifier Rubric
+## Verifier Rubric
 
 1. Accuracy
 2. Completeness

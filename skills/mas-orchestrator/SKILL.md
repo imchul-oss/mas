@@ -1,6 +1,6 @@
 ---
 name: mas-orchestrator
-description: "8-agent collaborative MAS — Context Architecture with mandatory XML tags, Multi-Watchdog Debate, Bayesian convergence, Adversarial Critic, Polisher, MCP async tasks, Memory API, checkpointing, handoff, federation. Triggers: MAS, multi-agent, systematic analysis, evidence-based verification, fact-check, thorough audit, self-check, system audit, polish, causal analysis, SLA."
+description: "Worker plus Verifier: a second pass in fresh context that re-derives the first agent's output and authors the corrected final. Warrant-gated - it runs only where an occasional wrong answer is expensive, and answers directly otherwise. Triggers: verification pass, fact-check, evidence-based verification, thorough audit, self-check, system audit, second opinion, check my work."
 ---
 
 ## Output Language Policy
@@ -10,15 +10,15 @@ description: "8-agent collaborative MAS — Context Architecture with mandatory 
 - **Breakpoint / gate messages**: Korean.
 </output_language_policy>
 
-# MAS Orchestrator — 8-Agent + Context Architecture
+# MAS Orchestrator - Worker + Verifier
 
 ## System Overview
 <system_overview>
-Eight specialized agents collaborate inside an XML-tag based document ecosystem (Context Architecture). Each agent has independent responsibility, applies proportional response to task complexity, and produces machine-parseable outputs with measurable simplicity guarantees.
+**Two roles: Worker, then Verifier.** The Worker produces the deliverable; the Verifier reads it in fresh context, re-derives what it can, applies the corrections and authors the final artifact. That is the whole architecture.
 
-**Core Principle**: Independent agent responsibility + Proportional Response + machine-parseable docs + measurable simplicity.
+It used to be eight. The other six were removed on 2026-08-09 because the eval said so, not because they were badly written - none had ever beaten a single-agent baseline, which guardrail 11 has required since v2.0.0, and the ten-agent configuration measured 14.13x the tokens for a lower score while shipping a false claim its own Critic had caught. What each of them was measured to contribute was folded into these two: partitioned-axis reading into the Verifier, evidence discipline into the Worker. Definitions and restoration conditions are kept in `_legacy/agents/`.
 
-**8 Agents**: Prompt Architect, PM, Researcher, Watchdog Pool, Worker, Adversarial Critic, Polisher, Verifier.
+**Core principle**: an agent boundary must change what is SEEN, not what is ASKED. A different instruction is a section in a prompt and costs nothing; a different context window costs about 50,000 tokens.
 </system_overview>
 
 ## Token Efficiency Protocol
@@ -47,7 +47,7 @@ possible identical prefix. This is Cost & Context Strategy rule 1, and the 2026-
 violated it - the judge prompts opened with the task and the document path, which caps the shared
 prefix at a few dozen tokens for no reason.
 
-Two consequences worth stating: an 8-agent pipeline costs ~400k in floor alone regardless of task
+Two consequences worth stating: a ten-agent pipeline cost ~500k in floor alone regardless of task
 size, so proportional response is a COST control and not only a quality one; and on small tasks the
 floor is nearly the entire bill, which is why the measured Worker+Verifier ratio sits near 2.0x
 rather than scaling with task difficulty.
@@ -57,7 +57,7 @@ rather than scaling with task difficulty.
 3. **Reference-Pointer Communication**: pass state file paths, not contents.
 4. **Selective Context Injection**: each sub-agent receives only the files it needs.
 5. **Compressed Handoff**: summarized `feedback_directive` only.
-6. **References Lazy Loading**: PM determines necessity before loading.
+6. **References Lazy Loading**: load a reference only when the phase needs it.
 7. **Async Tasks Offloading**: long-running tasks are detached via task handles.
 8. **Checkpoint Summary**: only the most recent checkpoint summary is retained.
 9. **Selective XML Tagging**: section-level wrapping only, never paragraph-level.
@@ -66,16 +66,15 @@ rather than scaling with task difficulty.
 ## Quality Guardrails
 <quality_guardrails>
 1. **Absolute no-hallucination**: "unverifiable" is preferred over unsourced claims.
-2. **Fact-based enforcement**: Researcher prioritizes Tier 1-2 sources.
-3. **Automatic framework selection**: PM picks the framework per task.
-4. **Conciseness**: Worker output is clear without losing substance.
-5. **Critical analysis first**: Verifier integrates its own rubric with Adversarial input.
-6. **Proportional Response**: simple tasks do not require all 8 agents.
-7. **Concurrency Safety**: file lock + atomic write.
-8. **External Spec Compliance**: MCP / Memory / Skills versions are pinned.
-9. **Context Architecture Compliance**: XML tag convention is enforced.
-10. **`<thinking>` mandatory**: Complex / Expert agents must externalize reasoning before answering.
-11. **Eval-justified complexity**: any new learning loop or added agent must beat a single-agent baseline on `eval/` before it ships. Complexity is earned against a measurable eval, not assumed.
+2. **Fact-based enforcement**: the Worker prioritises Tier 1-2 sources and says which it opened.
+3. **Conciseness**: Worker output is clear without losing substance.
+4. **The Verifier authors**: it applies its corrections rather than describing them, and its correction log stays out of the deliverable.
+5. **Proportional Response**: the Warrant Gate answers directly with one agent unless a wrong answer is expensive.
+6. **Concurrency Safety**: file lock + atomic write.
+7. **External Spec Compliance**: MCP / Memory / Skills versions are pinned.
+8. **Context Architecture Compliance**: XML tag convention is enforced.
+9. **`<thinking>` mandatory**: both roles externalise reasoning before answering.
+10. **Eval-justified complexity**: any added agent or learning loop must beat a single-agent baseline on `eval/` before it ships. This rule retired six of the original eight roles on 2026-08-09 when it was finally applied to incumbents; it applies to anything you want to add back.
 </quality_guardrails>
 
 ## Sub-Agent Optimization
@@ -83,18 +82,16 @@ rather than scaling with task difficulty.
 
 | Phase | Agent | Model | Rationale |
 |---|---|---|---|
-| 1 | Prompt Architect (Complex/Expert) | sonnet | Structuring XML-tagged prompts |
-| 2 | PM / Orchestrator | opus | Multi-decision accuracy |
-| 3a | Researcher | sonnet | Search throughput |
-| 3b | Watchdog (single) | opus | Factual accuracy |
-| 3b | Watchdog Pool x3 (Complex/Expert) | opus x3 | Multi-agent debate |
-| 3c | Worker (simple) | sonnet | Single skill |
-| 3c | Worker (complex) | opus | Multi-skill |
-| 3c.5 | Adversarial Critic (Complex/Expert) | opus | Adversarial verification |
-| 3c.7 | Polisher (Moderate+) | sonnet | Polish throughput |
-| 4 | Verifier | opus | QA accuracy |
+| 1 | Worker | session model | Produces the deliverable |
+| 1 | Worker Pool 2-5 | session model | Only when sub-tasks are independent AND each reads different material |
+| 2 | Verifier | session model | Re-derives, corrects, authors the final |
 
-Model routing is **static** (the table above). Dynamic telemetry-based routing is intentionally deferred until the eval harness (`eval/`) can prove it beats the static table — see Cost & Context Strategy.
+**Never run the Verifier below the Worker's model.** A judge that is weaker than the author does not
+verify less, it reports confidently on what was fine while missing what was not, and the whole value
+of this pair is the second read. Save on generation if you must; never on the check.
+
+Model routing is static. Dynamic telemetry-based routing stays deferred until `eval/` can show it
+beats the static table, and the same rule that retired six roles applies to it.
 </sub_agent_optimization>
 
 ## MAS Warrant Gate
@@ -107,7 +104,7 @@ So the pipeline raises the FLOOR, not the ceiling. What ~2x buys is variance red
 
 1. **Single-agent default.** One-shot lookup, short rewrite, known-answer question, small surgical edit → answer with one agent and say in one line that MAS was skipped.
 2. **The warrant question: how expensive is an occasional wrong answer here?** Warranted when the output is load-bearing and ships without a second reader - a fix that gets applied, a number that gets quoted, a severity ranking that sets work order, an irreversible action. Not warranted when the reader checks it anyway, when the task is self-verifying, or when being wrong costs a re-ask. Task type is a poor proxy: two audits warranted it and two syntheses did not, and all four were "high stakes" by the old signals.
-3. **The warranted default is a PAIR, not the pipeline.** Worker + Verifier is what earned its keep in measurement. Going beyond it needs a stated reason - genuinely independent sub-questions that parallelize (Researcher fan-out), a contested factual base (Watchdog Pool), an adversarial requirement the Verifier cannot self-serve (Critic). Absent one of those, more agents buy base context, not quality.
+3. **The pair is the whole architecture.** Worker + Verifier is what survived measurement; the only sanctioned expansion is a Worker Pool where sub-tasks are independent and each instance reads different material. Anything else buys base context, not quality, and guardrail 10 governs adding it back.
 4. **Right-size to complexity** (Phase 0.5) once past the gate.
 
 **What is actually measured, after judge variance was quantified (2026-08-09).** Four independent judges over the same two documents gave the single-agent artifact 4.8/4.1/4.8/4.2 (mean 4.475, **sd 0.377**) and the pair's 4.4/4.4/4.4/4.6 (mean 4.450, **sd 0.100**). The averages are indistinguishable - delta +0.025 - and the spread collapses 3.8x. Pooled sd 0.276 puts the standard error of an n=1 difference at 0.391, so **eleven of the twelve deltas this eval recorded are inside the noise floor** and the verdicts drawn from them are withdrawn (`eval/README.md`, retraction; `eval/variance_gate.py` now refuses a verdict at n=1).
@@ -122,7 +119,7 @@ Calibration note on my own earlier scores: on research-2, the only case scored b
 
 **Tested 2026-08-08 on the case most favourable to the pipeline.** `research-2` - the one case the June run scored `mas_worth_it`, needing external material, parallel decomposition and evidence grading - was run three ways: single 4.4 at 88,735 tokens, pair **4.8** at 184,175 (2.08x), full 10-agent Complex spec **4.1** at 1,253,663 (14.13x). The full spec cost 6.81x the pair, scored lower, and did not converge - its own Verifier returned CONDITIONAL_PASS 3.22/5 with a blocking defect, so a shippable artifact needs a Phase 5 pass on top of the 1.25M.
 
-**And the reason is an ordering defect, not weak agents.** The Watchdog Pool's corrections landed, because the Worker reads them and is the author. The Critic's did not: it caught a false claim, and nothing downstream can act on one, because at the time the Verifier was forbidden to edit and the Polisher may not alter facts. The deliverable shipped that claim at Established grade while self-reporting zero propagated false verdicts. **A phase that produces findings after the last agent able to edit the artifact is speculative work.** That is fixed as of this version - the Verifier now authors the corrected artifact and the Polisher moved behind it - and the rule generalises: before adding any phase, check it still has an author downstream of it.
+**And the reason is an ordering defect, not weak agents.** The Watchdog Pool's corrections landed, because the Worker reads them and is the author. The Critic's did not: it caught a false claim, and nothing downstream can act on one, because at the time the Verifier was forbidden to edit and the only role after it could not alter facts. The deliverable shipped that claim at Established grade while self-reporting zero propagated false verdicts. **A phase that produces findings after the last agent able to edit the artifact is speculative work.** That is fixed as of this version - the Verifier authors the corrected artifact - and the rule generalises: before adding any phase, check it still has an author downstream of it.
 </mas_warrant_gate>
 
 ## Cost & Context Strategy
@@ -131,7 +128,7 @@ Calibration note on my own earlier scores: on research-2, the only case scored b
 2. **`effort` over model-swap.** Use a low/medium reasoning-effort setting for routine coordination and reserve high effort for genuinely hard reasoning (Critic, Verifier, conflict arbitration). Cheaper than swapping to a bigger model.
 3. **Context isolation, not context dumping.** Each sub-agent explores in its own window and returns a **distilled 1,000–2,000 token summary**, not its raw transcript (Anthropic, *Effective context engineering*, 2025). "Context rot" is measured: recall degrades as input grows, well before the window limit.
 4. **Just-in-time context.** Pass reference pointers (state file paths, queries, IDs), not payloads. Load full content only when a specific agent needs it.
-5. **Structured Outputs for machine handoffs.** Constrained-decoding JSON-schema enforcement (`response_format`) lives only at the Anthropic Messages API layer; the Claude Code Agent/Task tool that spawns sub-agents does **not** expose it (sub-agent frontmatter is `context`/`agent`/`allowed-tools`/`model`/`effort`/`hooks` — no output-format control), so a skill cannot force schema-valid output at the agent boundary. Instead, for agent→agent machine-parsed payloads (PM plans, verdicts, schemas): **(a)** state the target JSON schema explicitly in the sub-agent prompt, and **(b)** enforce it post-hoc in code with `state_manager.validate_worker_output_schema()` plus a single self-correction retry on violation. Keep **XML tags** for reasoning-rich outputs that interleave `<thinking>` + `<answer>` — forcing complex reasoning into rigid JSON degrades it.
+5. **Structured Outputs for machine handoffs.** Constrained-decoding JSON-schema enforcement (`response_format`) lives only at the Anthropic Messages API layer; the Claude Code Agent/Task tool that spawns sub-agents does **not** expose it (sub-agent frontmatter is `context`/`agent`/`allowed-tools`/`model`/`effort`/`hooks` — no output-format control), so a skill cannot force schema-valid output at the agent boundary. Instead, for agent→agent machine-parsed payloads (plans, verdicts, schemas): **(a)** state the target JSON schema explicitly in the sub-agent prompt, and **(b)** enforce it post-hoc in code with `state_manager.validate_worker_output_schema()` plus a single self-correction retry on violation. Keep **XML tags** for reasoning-rich outputs that interleave `<thinking>` + `<answer>` — forcing complex reasoning into rigid JSON degrades it.
 </cost_context_strategy>
 
 ## Observability & Headless Operation
@@ -157,56 +154,34 @@ All learning writers (`source-reliability`, `telemetry`, `memory-entry`) are pla
 ```
 USER REQUEST
    |
-[Phase 0: Init] -- session_state, async_tasks, breakpoints
+[Warrant Gate] -- is an occasional wrong answer expensive here?
+   | no  -> one agent, say in a line that the pair was skipped, stop
+   | yes
    |
-[Phase 0.5: Complexity Classification]
-   | (Simple / Moderate / Complex / Expert)
+[Phase 0: Init] -- session_state (optional; a single-pass run needs no state dir)
    |
-[Phase 1: Prompt Architect] (Complex/Expert) -- mandatory <thinking>
+[Phase 1: Worker] -- <thinking> then <answer>; evidence discipline; declares its gaps
+   | Pool of 2-5 ONLY when sub-tasks are independent and each reads different material
    |
-[Phase 2: PM Orchestrator]
-   |- Skill mapping (local + Anthropic Skills)
-   |- Worker Pool design + structured_output_schema
-   |- Watchdog Pool activation
-   |- Adversarial Critic activation
-   |- Async task candidates
-   |- Checkpoint strategy
-   |- Polisher activation
-   | -> GATE: phase_2_plan_review
-   |
-[Phase 3a: Researcher] (+ Memory API import)
-   |
-[Phase 3b: Watchdog Pool x3] (Complex/Expert)
-   | -> GATE: phase_3b_false_detected | watchdog_disagreement_arbitration
-   |
-[Phase 3c: Worker Pool] (+ Handoff, Structured Output, Token Budget)
-   | conflict detection
-   | -> GATE: worker_conflict_resolution
-   |
-[Phase 3c.5: Adversarial Critic] (on trigger) -- findings route to Phase 4, which can act on them
-   |
-[Phase 4: Verifier] -- THE AUTHOR OF THE FINAL ARTIFACT
-   |- Worker-Output Re-Derivation
-   |- Watchdog Pool synthesis
-   |- Adversarial input integration -- and the corrections are APPLIED here
-   |- Schema compliance
-   |- context_architecture_compliance
-   |- emits the corrected final artifact, not only a verdict
+[Phase 2: Verifier] -- fresh context, AUTHORS the corrected final artifact
+   |- Worker-Output Re-Derivation (5 checks, mandatory)
+   |- partitioned axes when the artifact is too large for one sweep
+   |- applies its corrections rather than describing them
+   |- grades its own additions at the standard it applied to the Worker
+   |- correction log goes to a SEPARATE report, never into the deliverable
    | -> GATE: phase_4_verification_result
    |
-[Phase 4.5: Polisher] (on trigger) -- fact-preserving polish, AFTER corrections land
+[Phase 3: Feedback Loop] (only if the Verifier withheld a pass) -- max 3 iterations
    |
-[Phase 5: Feedback Loop] (if needed) + checkpoint rollback
-   |
-[Phase 6: Final + Memory API export]
+[Final]
 ```
 
 **Authorship rule (2026-08-08, from the `research-2` full-spec run).** Every phase that produces
-findings must have an author downstream of it, or be one itself. The Polisher moved from 3c.7 to 4.5
-for the same reason: polishing before the corrections land means the polished artifact is the
-uncorrected one, and the agent that finds the error afterwards cannot fix it. In the measured run the
-Critic correctly identified a false claim and the deliverable shipped it at Established grade,
-because between 3c.5 and delivery sat only two agents forbidden to touch facts.
+findings must have an author downstream of it, or be one itself. This is why the Verifier authors
+instead of judging, and it is the rule that decided which roles could survive at all: in the measured
+ten-agent run the Critic correctly identified a false claim and the deliverable shipped it at
+Established grade, because everything between the finding and delivery was forbidden to touch facts.
+Any phase you add back must satisfy this rule before anything else.
 </agent_architecture>
 
 ## Execution Protocol
@@ -219,36 +194,19 @@ python scripts/state_manager.py --state-dir ./state breakpoint --action set-poli
 ```
 Atomic writes + file lock. Async tasks and handoffs are initialized here. XML lint runs before agent phases.
 
-### Phase 0.5: Complexity Classification
+### Phase 0.5: Right-sizing
 
-Baseline for every tier is the **pair**: Worker + Verifier. Everything else is opt-in against a named
-trigger, because at ~50,000 tokens per agent a default-on role bills whether or not it was needed,
-and none of the opt-in roles has ever been measured against a single-agent baseline (guardrail 11,
-applied to incumbents - see `references/architecture.md`).
+There is no complexity table any more, because there are no optional roles to switch on. The Warrant
+Gate decides one agent or two; past that the only remaining question is whether the Worker is one
+instance or a pool, and a pool is warranted only when the sub-tasks are independent and each instance
+reads different material.
 
-| Complexity | Researcher | Watchdog | Adversarial | Polisher | Prompt Architect | Async | Checkpoint | Handoff | `<thinking>` |
-|---|---|---|---|---|---|---|---|---|---|
-| Simple | on trigger | off | off | off | off | off | off | off | optional |
-| Moderate | on trigger | on trigger | off | on trigger | off | optional | off | off | on |
-| Complex | on trigger | on trigger | on trigger | on trigger | off | on | on | optional | on |
-| Expert | on trigger | 3 (Pool) | on | on trigger | on trigger | on | on | on | on |
+`<thinking>` is on for both roles at all times. It costs nothing and the Verifier's re-derivation is
+unreadable without the Worker's reasoning to check against.
 
-**Triggers.** Researcher: the task needs material not already in context (a lookup, a source, a file
-nobody has read). Watchdog: the factual base is contested or a wrong fact is unrecoverable; Pool of 3
-only when the three would read DIFFERENT material, since three agents over one document give
-correlated votes. Adversarial Critic: an adversarial requirement the Verifier's re-derivation step
-cannot self-serve - it reads the same artifact the Verifier does, so it is redundancy until that is
-shown false. Polisher: the output has a named audience and a style contract; measured single-agent
-output needed no polish pass. Prompt Architect: the request is genuinely ambiguous AND will be
-consumed by several agents.
-
-PM runs in light mode by default and is the one role that may not spawn to decide a spawn - at 50,000
-tokens, an orchestrator deciding between cheap options costs more than the decision saves.
-
-### Phases 1 to 6
-Each phase consults the relevant `agents/*.md` definition. All agent definitions use the XML-tag convention defined in `references/context-architecture.md`.
-
-Gate IDs are listed in the Gate Definitions section below.
+### Phases 1 to 3
+Each phase consults its `agents/*.md` definition. Both use the XML-tag convention in
+`references/context-architecture.md`. Gate IDs are below.
 </execution_protocol>
 
 ## State Management
@@ -292,35 +250,23 @@ Gate IDs are listed in the Gate Definitions section below.
 
 | gate_id | Phase | Trigger |
 |---|---|---|
-| phase_2_plan_review | 2 | PM plan finalized |
-| phase_3b_false_detected | 3 | Watchdog FALSE |
-| watchdog_disagreement_arbitration | 3 | Pool split after Round 2 |
-| phase_3c_worker_start | 3 | Before Worker start |
-| worker_conflict_resolution | 3 | Worker conflict unresolved |
-| phase_4_verification_result | 4 | Verifier completed |
-| feedback_loop_iteration | 5 | Feedback loop iteration begins |
-| async_task_timeout | 3 | Async task timeout |
-| memory_api_sync_failure | 0 | Memory import failure |
-| sla_breach | 4 | Critical SLA breach |
-| multimodal_vision_call | 3b | Vision API opt-in |
-| calibration_recalibration | 6 | 5 real observations accumulated; recommend mapping refresh |
-| review_round_continue | 3 | Review consensus dispersion |
-| peer_review_hop_limit | 3 | Hop >= 3 |
-| interaction_token_budget_breach | 3 | Interaction cost overrun |
-| specialist_worker_promotion | 6 | PM promotion recommendation |
-| skill_creation_review | 6 | Skill creation proposal |
-| agent_evolution_review | 6 | Agent evolution proposal |
-| skillopt_deploy_best | 6 | best_score > current_baseline |
-| goal_driven_max_iter | 3 | Goal-driven loop reaches max_iterations without meeting all criteria |
+| phase_4_verification_result | 2 | Verifier completed |
+| feedback_loop_iteration | 3 | Feedback loop iteration begins |
+| worker_conflict_resolution | 1 | Worker Pool conflict unresolved |
+| async_task_timeout | 1 | Async task timeout |
+| sla_breach | 2 | Critical SLA breach |
+
+Gate ids kept their historical names so existing state files and `state_manager.py` still parse.
+Fourteen gates belonging to retired roles were removed with them; they are listed in
+`_legacy/agents/README.md` if a role is ever restored.
+
 </gate_definitions>
 
 ## Error Handling
 <error_handling>
 - Agent failure: up to 2 retries.
-- Watchdog Pool split: Round 2 -> user gate.
 - Worker conflict: 4-stage auto resolution -> user gate.
 - Async task timeout: user gate.
-- Memory API failure: local fallback.
 - Infinite feedback loop: max 3 iterations.
 - XML tag orphan detected: single self-correction; failure deducts the Verifier dimension.
 - All errors are logged to `state/error_log.json`.
@@ -331,14 +277,10 @@ Gate IDs are listed in the Gate Definitions section below.
 
 | Agent | File |
 |---|---|
-| Prompt Architect | `agents/prompt-architect.md` |
-| PM / Orchestrator | `agents/pm-orchestrator.md` |
-| Researcher | `agents/researcher.md` |
-| Watchdog | `agents/watchdog.md` |
 | Worker | `agents/worker.md` |
-| Adversarial Critic | `agents/adversarial-critic.md` |
-| Polisher | `agents/polisher.md` |
 | Verifier | `agents/verifier.md` |
+
+Retired 2026-08-09 and kept with their restoration conditions: `_legacy/agents/`.
 
 References: `references/architecture.md`, `protocols.md`, `state-schema.md`, `evolution-policy.md`, `context-architecture.md`, `skill-catalog.md`, `c-integration-notes.md`, `federation-architecture.md`, `karpathy-guidelines.md`, `skillopt-integration.md`, `external-spec-status.md`, `upgrade-assessment-2026-08.md`.
 </agent_references>

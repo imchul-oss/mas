@@ -61,6 +61,20 @@ Elevated by Adversarial Critic input:
 ### Schema Compliance Check
 Validate Worker `structured_output_schema`. Record violations in `schema_compliance`. One critical FALSE + one schema violation -> immediate FAIL.
 
+### Partitioned axes, when one pass cannot hold the artifact
+Inherited 2026-08-09 from the retired Watchdog Pool, which is the one thing the ten-agent
+configuration measurably did well. Over a 45-source document, three checkers given NAMED AXES -
+citation existence, numeric provenance, source independence - returned disjoint real defects: 11
+sources written off as unverifiable that were real (6 Tier A), a baseline band mis-transcribed in
+three places, and three source pairs cited as independent that were one lab, one author group and one
+benchmark lineage. One reader holding all three axes at once over that much material does not find
+all three sets.
+
+So when the artifact is large enough that a single sweep would blur, name the axes and run the
+re-derivation once per axis, reporting per axis. This is a way of READING, not a second agent: axes
+are free, a context window is not. Identical instructions over one document is the correlated case
+that buys nothing.
+
 ### Worker-Output Re-Derivation (mandatory, and it is where this agent earns its cost)
 Measured 2026-08-08 (`eval/`, 8 cases): every case the pipeline won was won here, and none was won
 by seeing more of the problem than a single agent did. The Worker reliably finds the hard content and
