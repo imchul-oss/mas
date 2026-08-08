@@ -46,9 +46,30 @@ whose value per unit is unmeasured. Sequence matters here: the eval first, then 
 
 ## Remaining candidates
 
+## Shipped 2026-08-08 from the measured run
+
+Eight of twelve cases executed, 1.35M tokens. Three changes went in, all of them subtractive or
+retargeting rather than additive, so guardrail 11 is satisfied without a further eval:
+
+- **Warrant Gate re-derived.** Its ~15x cost premise was measured at 1.83x-2.23x for a verify pair on
+  this runtime. Its decision axis moved from task type and stakes to cost of an occasional wrong
+  answer, because both proxies mis-sorted the measured set: two audits warranted it and two syntheses
+  did not, and all four were high-stakes by the old signals. The warranted default is now a
+  Worker+Verifier PAIR, with escalation beyond it needing a stated reason.
+- **Token Efficiency Protocol re-ordered.** A sub-agent costs ~50,000 tokens of base context before
+  doing any work, so agent COUNT dominates payload optimisation. Cutting one agent beats optimising
+  four. The old rules stay; they were solving the smaller term.
+- **Verifier given a Worker-Output Re-Derivation step.** Every measured win came from catching the
+  Worker's own error rather than from seeing more of the problem, so the five error shapes that were
+  actually caught are now a checklist: recompute derived numbers, check a remedy is scoped to what
+  the diagnosis named, look for recoverable information the Worker discarded, check the conclusion
+  against the Worker's own reasoning, and name claimed-but-absent items.
+
+## Remaining candidates
+
 | candidate | ring | reasoning |
 |---|---|---|
-| 12-case eval run | **adopt** | Cases expanded 7 -> 12 on 2026-08-08. Execution is outstanding and everything else waits on it |
+| remaining 4 eval cases | **adopt** | `research-1`, `research-2`, `fact-2`, `code-refactor-1`. Research fan-out is the one shape that could move the CEILING rather than the floor, since those agents read different material instead of re-reading one output. A gain there reopens the pair-as-default rule |
 | MCP spec reassessment | **adopt** | Done, see `references/external-spec-status.md`. Outcome was WAIT, not a version bump |
 | GEPA one offline run | **trial** | The engine exists and its fitness function is the eval scorer, so it is blocked on the eval, not on the optimizer |
 | DSPy MIPROv2 as the optimizer | **assess** | Would be a second optimizer with the same blocker. Judge only if GEPA runs and disappoints |

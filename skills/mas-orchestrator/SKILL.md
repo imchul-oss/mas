@@ -23,14 +23,27 @@ Eight specialized agents collaborate inside an XML-tag based document ecosystem 
 
 ## Token Efficiency Protocol
 <token_efficiency_protocol>
-1. **Lazy Loading**: `agents/*.md` is loaded only when that phase is entered.
-2. **Reference-Pointer Communication**: pass state file paths, not contents.
-3. **Selective Context Injection**: each sub-agent receives only the files it needs.
-4. **Compressed Handoff**: summarized `feedback_directive` only.
-5. **References Lazy Loading**: PM determines necessity before loading.
-6. **Async Tasks Offloading**: long-running tasks are detached via task handles.
-7. **Checkpoint Summary**: only the most recent checkpoint summary is retained.
-8. **Selective XML Tagging**: section-level wrapping only, never paragraph-level.
+**Rule 0 dominates the rest: cut AGENTS before you cut payload.** Measured 2026-08-08 over 20
+sub-agent runs, a sub-agent costs about **50,000 tokens of base context before it does any work**;
+across cases the whole spread ran 50,125 to 70,445. Every rule below trims the payload *on top of*
+that floor, so removing one agent saves more than perfectly optimising the context of four. The
+rules stay because they are close to free, but a plan that adds a phase to save context has the
+arithmetic backwards.
+
+Two consequences worth stating: an 8-agent pipeline costs ~400k in floor alone regardless of task
+size, so proportional response is a COST control and not only a quality one; and on small tasks the
+floor is nearly the entire bill, which is why the measured Worker+Verifier ratio sits near 2.0x
+rather than scaling with task difficulty.
+
+1. **Fewest agents that can do the job** - the only lever that moves the dominant term.
+2. **Lazy Loading**: `agents/*.md` is loaded only when that phase is entered.
+3. **Reference-Pointer Communication**: pass state file paths, not contents.
+4. **Selective Context Injection**: each sub-agent receives only the files it needs.
+5. **Compressed Handoff**: summarized `feedback_directive` only.
+6. **References Lazy Loading**: PM determines necessity before loading.
+7. **Async Tasks Offloading**: long-running tasks are detached via task handles.
+8. **Checkpoint Summary**: only the most recent checkpoint summary is retained.
+9. **Selective XML Tagging**: section-level wrapping only, never paragraph-level.
 </token_efficiency_protocol>
 
 ## Quality Guardrails
@@ -69,15 +82,18 @@ Model routing is **static** (the table above). Dynamic telemetry-based routing i
 
 ## MAS Warrant Gate
 <mas_warrant_gate>
-**A multi-agent system costs ~15x the tokens of a single agent call, and token volume alone explains ~80% of the performance variance** (Anthropic, *Building a multi-agent research system*, 2025). So the first decision is not "which agents" but "does this task warrant a MAS at all".
+**Two cost figures, and using the wrong one mis-sizes this gate.** The ~15x in Anthropic's *Building a multi-agent research system* (2025) describes a deep many-agent research run. **Measured on this runtime (`eval/`, 8 cases, 2026-08-08), a Worker+Verifier pair costs 1.83x to 2.23x**, because a sub-agent carries roughly 50,000 tokens of base context before it does any work and that floor dominates everything else. Read the number that matches the shape you are about to run: a verify pair is ~2x, and eight agents at that floor approach the original figure.
 
-Run this gate **before Phase 1**, even when the skill was triggered:
+**The decision axis is not task type, and not stakes.** Measured across the same 8 cases: the single agent found every planted trap - it rejected a false thread-safety premise and measured the race to prove it, caught a double-counted forecast and solved for the hidden source, called out a category error across mismatched statistics, and found every planted auth defect. MAS never won by seeing more of the problem. It won, twice, by a Verifier catching the **first agent's own** error: a lock scoped to the wrong object, a mis-multiplied revision range, a discarded datum, a floor contradicting its own argument. It lost the other two because the single agent had simply made no such error.
 
-1. **Single-agent default.** If the task is a one-shot lookup, a short rewrite, a known-answer question, or a small surgical code edit → answer directly with one agent. Do not spin up the pipeline. State in one line that MAS was skipped as unwarranted.
-2. **Warrant signals (need ≥1 to proceed to full MAS):** independent sub-questions that parallelize (read-heavy research), high cost-of-being-wrong (fact-critical, irreversible), an explicit audit/verification request, or multi-skill synthesis that exceeds one context.
-3. **Right-size to complexity** (Phase 0.5). Even when warranted, Simple/Moderate down-scale per the complexity table — most tasks do not need all 8 agents.
+So the pipeline raises the FLOOR, not the ceiling. What ~2x buys is variance reduction. Ask accordingly:
 
-The MAS earns its 15x only on read-heavy, parallelizable, or high-stakes work. When in doubt, the simplest pattern that passes the task is the correct one.
+1. **Single-agent default.** One-shot lookup, short rewrite, known-answer question, small surgical edit → answer with one agent and say in one line that MAS was skipped.
+2. **The warrant question: how expensive is an occasional wrong answer here?** Warranted when the output is load-bearing and ships without a second reader - a fix that gets applied, a number that gets quoted, a severity ranking that sets work order, an irreversible action. Not warranted when the reader checks it anyway, when the task is self-verifying, or when being wrong costs a re-ask. Task type is a poor proxy: two audits warranted it and two syntheses did not, and all four were "high stakes" by the old signals.
+3. **The warranted default is a PAIR, not the pipeline.** Worker + Verifier is what earned its keep in measurement. Going beyond it needs a stated reason - genuinely independent sub-questions that parallelize (Researcher fan-out), a contested factual base (Watchdog Pool), an adversarial requirement the Verifier cannot self-serve (Critic). Absent one of those, more agents buy base context, not quality.
+4. **Right-size to complexity** (Phase 0.5) once past the gate.
+
+**What would change this.** Four `warrant_mas: true` cases are unrun (`research-1`, `research-2`, `fact-2`, `code-refactor-1`); research fan-out is the shape most likely to move the ceiling rather than the floor, since it is the one case where agents see different material rather than re-reading the same output. A measured ceiling gain there reopens step 3.
 </mas_warrant_gate>
 
 ## Cost & Context Strategy

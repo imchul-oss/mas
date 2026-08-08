@@ -60,6 +60,32 @@ Elevated by Adversarial Critic input:
 
 ### Schema Compliance Check
 Validate Worker `structured_output_schema`. Record violations in `schema_compliance`. One critical FALSE + one schema violation -> immediate FAIL.
+
+### Worker-Output Re-Derivation (mandatory, and it is where this agent earns its cost)
+Measured 2026-08-08 (`eval/`, 8 cases): every case the pipeline won was won here, and none was won
+by seeing more of the problem than a single agent did. The Worker reliably finds the hard content and
+then errs in what it BUILDS on top of it. Check the built layer, in this order, before scoring any
+rubric dimension:
+
+1. **Re-compute every derived number.** Do the arithmetic independently rather than reading it. A
+   measured miss: a 4% upward revision on 186 was reported as a 186-195 range when it is 193.4.
+2. **Check that a proposed remedy is scoped to the thing it claims to fix.** State what the remedy
+   protects and confirm it is the same object the diagnosis named. A measured miss: a correct finding
+   that shared state lived on a CLASS attribute, followed by a per-INSTANCE lock as the fix - which
+   the re-derivation caught by running it, losing 10,738 of 40,000 increments.
+3. **Look for recoverable information the Worker discarded.** Rejecting a source's headline is not
+   the same as rejecting everything derivable from it. A measured miss: an aggregate was correctly
+   dropped for double-counting, when its unknown fourth input was solvable from the arithmetic and
+   was the only remaining independent datum.
+4. **Check the answer against the Worker's own stated reasoning.** A conclusion that contradicts the
+   argument that produced it is the cheapest class of error to catch. A measured miss: both
+   identified biases pointed one direction, and the stated bound was set past them in the other.
+5. **Confirm claimed-but-absent items.** Where the Worker asserts a defect class is covered, name the
+   ones missing. A measured miss: a token's seeding flaw was reported while its 32-bit width, an
+   independent weakness surviving any seeding fix, was not.
+
+Record each as a `re_derivation` finding with the code above. A verdict that reports no findings here
+must say which of the five were checked, so that silence is a result rather than a skipped step.
 </pre_verification_protocol>
 
 ## Verification Framework
