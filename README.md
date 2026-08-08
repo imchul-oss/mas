@@ -6,6 +6,14 @@ This skill is **on-demand and self-gating**: even when triggered, a **Warrant Ga
 
 ---
 
+## What's new in 2.3.0
+
+**Correction to 2.2.0's headline first.** The "compact pipeline" measured there was a Worker+Verifier pair, a configuration this architecture never defined. Adding up the activation policies as specified — PM and Researcher unconditionally active, Worker and Verifier always running — the real floor was **Simple 4 agents / 200k (4.0x), Moderate 6 / 300k (6.0x), Complex and Expert 10 / 500k (10.0x)**. So the literature's ~15x was a fair description of *this* architecture at Complex, and there was no cheap tier: even Simple billed 4x before any work.
+
+- **Design Principle 0 — an agent boundary must change what is SEEN, not what is ASKED.** A different instruction is a section in a prompt and is free; a different context window is 50,000 tokens. Sorting the eight roles by that test: **Verifier** (fresh context over the Worker's output), **Researcher** (external material), and a **parallel Worker Pool** (a different sub-task each) earn a boundary. **Prompt Architect, PM, Watchdog and Polisher** re-read material the previous agent already had. **Adversarial Critic** does take fresh context — but the same fresh context the Verifier already takes.
+- **Guardrail 11 applied to incumbents.** The rule that new complexity must beat a single-agent baseline had never been applied backwards, so six roles held always-on or default-on status unmeasured. All six are now opt-in against a named trigger, the per-tier baseline is the pair, and each role's definition names the eval result that restores its default. New floors: Simple/Moderate/Complex **100k (2.0x)**, Expert **300k (6.0x)**.
+- **Not a claim that those roles don't work** — it is the existing guardrail applied to what was already there, reversible one line at a time. The decisive test is still unrun: one Complex case executed twice, full 10-agent spec against the pair, ~600k for the single case. That is what separates "the pipeline raises the ceiling" from "it raises the floor".
+
 ## What's new in 2.2.0
 
 Three changes, each from the 8-case measured run, all subtractive or retargeting rather than additive:
@@ -75,16 +83,18 @@ This plugin is distributed as a Claude Code marketplace. Both local and GitHub i
 
 ## 8-Agent Architecture
 
-| # | Agent | Role | KPI |
-|---|---|---|---|
-| 1 | **Prompt Architect** | User request → structured prompt + mandatory `<thinking>` block | Clarity, Completeness, Actionability |
-| 2 | **PM / Orchestrator** | Process design, Worker Pool, pool activation, federation routing | Process Completeness, Resource Optimization |
-| 3 | **Researcher** | Information collection with tiered source reliability | Source Credibility, Coverage |
-| 4 | **Watchdog Pool** (x3 for Complex/Expert) | Fact verification via multi-agent debate | Verdict Accuracy |
-| 5 | **Worker (Pool)** | Task execution with handoff, structured output, token budget | Output Quality, Schema Compliance |
-| 6 | **Adversarial Critic** | Proactive vulnerability discovery (counter-scenarios, edge cases) | Vulnerability Discovery Rate |
-| 7 | **Polisher** | Linguistic polish (Korean style, terminology, readability — fact-preserving) | Linguistic Quality |
-| 8 | **Verifier** | 10-dimension rubric QA, adversarial integration, schema validation | Defect Detection, Improvement Effectiveness |
+Two of the eight are the baseline; the rest are opt-in against a named trigger as of 2.3.0. "Boundary" is Design Principle 0: does spawning this agent change what is SEEN, or only what is ASKED.
+
+| # | Agent | Role | Activation | Boundary |
+|---|---|---|---|---|
+| 5 | **Worker (Pool)** | Task execution with handoff, structured output, token budget | **baseline** | Pool only: a different sub-task each |
+| 8 | **Verifier** | 10-dimension rubric QA + Worker-Output Re-Derivation, schema validation | **baseline** | Yes — fresh context over the Worker's output |
+| 3 | **Researcher** | Information collection with tiered source reliability | on trigger: material not already in context | Yes — external material |
+| 4 | **Watchdog** (Pool of 3 at Expert) | Fact verification via multi-agent debate | on trigger: contested factual base | No — claims already in context; 3 over one document are correlated votes |
+| 6 | **Adversarial Critic** | Proactive vulnerability discovery (counter-scenarios, edge cases) | on trigger at Complex, on at Expert | Fresh, but the same fresh context the Verifier takes |
+| 7 | **Polisher** | Linguistic polish (Korean style, terminology — fact-preserving) | on trigger: named audience + style contract | No — rewrites the Worker's prose |
+| 2 | **PM / Orchestrator** | Process design, Worker Pool, pool activation, federation routing | always, **light mode default**; may not spawn to decide a spawn | Partial |
+| 1 | **Prompt Architect** | User request → structured prompt + mandatory `<thinking>` block | on trigger at Expert only | No — same request, restructured for the same model |
 
 ---
 
