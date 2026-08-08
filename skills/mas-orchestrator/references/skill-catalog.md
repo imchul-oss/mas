@@ -2,7 +2,7 @@
 
 ## Overview
 <integration_note>
-This catalog is a **hint list, not an authority** — the harness's live Skill-tool list is the source of truth for what's actually installed (a hand-maintained catalog goes stale). PM consults it during Phase 2 skill mapping and injects only the 1-2 relevant skills per agent (selective injection — agents do not each search). Worker invokes skills during Phase 3c execution. Anthropic Agent Skills are integrated bidirectionally.
+This catalog is a **hint list, not an authority** - the harness's live Skill-tool list is the source of truth for what is actually installed, because a hand-maintained catalogue goes stale. The Worker consults it before delegating and pulls in only the one or two skills the task needs. Anthropic Agent Skills are integrated bidirectionally.
 </integration_note>
 
 ## Document Creation Skills

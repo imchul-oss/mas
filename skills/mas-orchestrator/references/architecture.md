@@ -5,8 +5,14 @@
 Two roles - Worker, then Verifier - inside the XML tag convention. Six further roles were retired 2026-08-09; see `_legacy/agents/README.md`.
 </protocol_definition>
 
-## Cost Structure (measured 2026-08-08)
+## Cost Structure (measured 2026-08-08) - HISTORICAL
+
 <integration_note>
+**This section describes the eight-role architecture as it stood before v3.0.0, and it is kept
+because it is the evidence for retiring it.** The tiers, the roles in the boundary table and the
+ten-agent arm no longer exist. Read it as the measurement that produced the current two-role design,
+not as a description of what runs today.
+
 
 A sub-agent costs about **50,000 tokens of base context before it does any work**. Multiply that by
 the activation policies below and the architecture has a floor per tier, independent of task size:
