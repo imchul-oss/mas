@@ -42,9 +42,29 @@ what it discriminates rather than what it covers:
 The set is deliberately 8 warrant-true / 4 warrant-false: the false cases exist to catch a gate that
 fires too eagerly, which is the failure mode that costs money silently.
 
-**Run status: not yet executed.** `results.jsonl` holds the 3-case run from 2026-06-28. The 12-case
-run is the outstanding work; until it exists, SKILL.md guardrail 11 blocks any new learning loop or
-added agent from shipping.
+### Fixtures
+
+Seven of the twelve cases hand the agent an artifact, which lives in `fixtures/` and is named by the
+case's `fixture` field. Before 2026-08-08 those cases named an artifact that did not exist ("this
+300-line auth module", "these 5 conflicting analyst reports", `<text>`), so only the five
+self-contained cases could actually be run - which is why the 2026-06-28 run covered three cases and
+still read as a full harness. A case that cannot be run is not a coverage gap, it is a silent cap.
+
+The fixtures are built so the right answer is checkable rather than a matter of taste: `audit-1`
+carries defects of differing severity so the RANKING can be graded, `synth-1`'s fifth report averages
+three of the other four so a correct answer must catch the double-count, `synth-2`'s three sources
+measure different scopes so any averaged figure is wrong, `audit-2`'s "local variable" binds a shared
+dict, and `code-refactor-1` hides load-bearing behavior (atomic replace, silent default on malformed
+config, backoff, loop-survives-failure) that a careless split drops.
+
+```bash
+python eval/validate_cases.py            # every case runnable? (also in CI)
+python eval/validate_cases.py --selftest
+```
+
+**Run status: not yet executed.** `results.jsonl` holds the 3-case run from 2026-06-28. All 12 cases
+are runnable as of 2026-08-08; the run itself is the outstanding work, and until it exists SKILL.md
+guardrail 11 blocks any new learning loop or added agent from shipping.
 
 ## Sample run (`results.jsonl`)
 

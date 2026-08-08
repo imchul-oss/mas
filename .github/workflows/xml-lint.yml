@@ -81,8 +81,13 @@ jobs:
         working-directory: skills/mas-orchestrator
         run: python -m unittest discover -s scripts -p "test_*.py" -v
 
-      - name: Run eval harness tests + scorer self-check
+      # validate_cases runs BEFORE the scorer: a case naming a fixture that does not
+      # exist caps the eval silently, which is how the 2026-06-28 run executed 3 of 7
+      # cases and still read as a full harness.
+      - name: Run eval harness tests + case validation + scorer self-check
         working-directory: skills/mas-orchestrator
         run: |
           python -m unittest discover -s eval -p "test_*.py" -v
+          python eval/validate_cases.py --selftest
+          python eval/validate_cases.py
           python eval/scorer.py

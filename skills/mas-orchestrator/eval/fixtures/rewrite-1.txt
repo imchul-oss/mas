@@ -1,0 +1,6 @@
+It is important to note that, in the event that a user should happen to submit a
+request which does not contain all of the fields that are required by the system,
+the system will, at that point in time, proceed to return back an error message to
+the user in question, which will have the effect of informing them as to the fact
+that there are fields which are missing and which need to be supplied before the
+request is able to be processed successfully by the system.
