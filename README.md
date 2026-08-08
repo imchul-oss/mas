@@ -94,16 +94,19 @@ Six roles were retired on 2026-08-09: Prompt Architect, PM, Researcher, Watchdog
 
 ## Verifier Rubric
 
-1. Accuracy
-2. Completeness
-3. Consistency
-4. Efficiency
-5. Traceability
-6. Robustness (adversarial verdict integration)
-7. External Compliance (MCP / Memory / Skills schemas)
-8. Linguistic Quality (Polisher metrics)
-9. Context Architecture Compliance (XML tag convention)
-10. Senior Engineer Test (code simplicity, AST-based)
+Nine dimensions, scored 1-5, after the mandatory re-derivation:
+
+1. Accuracy - claims that survive re-computation and source-scope checking
+2. Completeness - the task's stated requirements, and declared gaps being real
+3. Consistency - the conclusion follows from the document's own reasoning
+4. Efficiency - process efficiency from telemetry, when a state dir is in use
+5. Traceability - every load-bearing claim reaches a source that says what it is cited for
+6. Robustness - the Verifier's own adversarial pass
+7. External Compliance - MCP / Memory / Skills schema compliance
+8. Linguistic Quality - reads for its audience, carries no process narration
+9. Context Architecture Compliance - XML tag convention, deterministic via `xml_parser`
+
+PASS at >= 4.0, CONDITIONAL_PASS at 3.0-3.9, FAIL below.
 
 ---
 

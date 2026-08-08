@@ -29,7 +29,7 @@ This catalog is a **hint list, not an authority** - the harness's live Skill-too
 <protocol_definition>
 
 ### data:analyze / data:explore-data / data:create-viz / data:build-dashboard / data:statistical-analysis / data:write-query / data:sql-queries / data:validate-data
-- Researcher: augment information collection (`data:analyze`, `data:statistical-analysis`).
+- Worker: augment information collection (`data:analyze`, `data:statistical-analysis`).
 - Worker: analysis, visualization, dashboards.
 - Verifier: `data:validate-data`.
 </protocol_definition>
@@ -41,7 +41,7 @@ operations:status-report / risk-assessment / process-doc / process-optimization 
 
 ## Brand & Content Skills
 <protocol_definition>
-- `brand-voice:brand-voice-enforcement` (integrates with Polisher).
+- `brand-voice:brand-voice-enforcement` (when the output has a style contract).
 - `brand-voice:guideline-generation` / `discover-brand`.
 </protocol_definition>
 

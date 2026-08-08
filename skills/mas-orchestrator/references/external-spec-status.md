@@ -46,7 +46,7 @@ Do not adopt now, in either direction:
 - **HTTP+SSE transport** is reclassified as deprecated.
 
 Not affected by this revision: the MCP Registry search path (`search_plugins` /
-`search_mcp_registry`) that PM skill discovery uses. That is a registry API, not the transport spec.
+`search_mcp_registry`) the Worker uses to find a skill. That is a registry API, not the transport spec.
 
 ## Anthropic Memory
 

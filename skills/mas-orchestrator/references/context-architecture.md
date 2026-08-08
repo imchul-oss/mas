@@ -65,7 +65,7 @@ Preserve markdown headers (human-readable) and add XML tags (machine-parseable).
 | `<token_efficiency_rules>` | Token-efficiency rules | required |
 | `<failure_modes>` | Failure handling | required |
 | `<feedback_integration>` | Feedback handling | required |
-| `<non_negotiable_rules>` | Absolute rules | required (Watchdog / Adversarial) |
+| `<non_negotiable_rules>` | Absolute rules | required (Verifier) |
 | `<evolution_notes>` | Evolution / version notes | optional |
 
 ### 2.2 SKILL.md

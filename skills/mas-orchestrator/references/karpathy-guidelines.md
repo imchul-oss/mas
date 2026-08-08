@@ -27,9 +27,9 @@ Models sometimes change or remove comments and code they do not fully understand
 
 | Principle | MAS Mapping | Enforcement |
 |---|---|---|
-| **1. Think Before Coding** | Mandatory `<thinking>` + Watchdog Pool + Adversarial Critic | retained |
-| **2. Simplicity First** | Token Budget + Polisher + Proportional Response | Senior Engineer Test dimension |
-| **3. Surgical Changes** | Worker schema + Polisher fact preservation | Touch-Only-Requested check |
+| **1. Think Before Coding** | Mandatory `<thinking>` + the Verifier's re-derivation and adversarial pass | retained |
+| **2. Simplicity First** | Token Budget + Proportional Response | retained |
+| **3. Surgical Changes** | Worker schema + the Verifier refusing scope creep | Touch-Only-Requested check |
 | **4. Goal-Driven Execution** | Verifier rubric + Bayesian convergence | Goal-Driven Worker Mode + Test-First Transformation |
 </integration_note>
 
@@ -45,14 +45,10 @@ LLMs excel at looping until they meet specific goals. Provide success criteria, 
 
 | Mode | Description | Default |
 |---|---|---|
-| `prescriptive` | PM specifies role / persona / assigned_tasks / steps | default |
-| `goal_driven` | PM specifies success_criteria only; Worker loops | optional |
+| `prescriptive` | The task names the steps to follow | default |
 
 ### Activation Conditions
 
-PM sets `pm_plan.worker_pool.workers[i].execution_mode = "goal_driven"` when:
-- The task is verifiable (testable, measurable output).
-- Complexity is Moderate or Complex (Simple is one-shot; Expert prefers prescriptive).
 
 ### Goal-Driven Worker Loop
 ```
@@ -72,8 +68,7 @@ PM sets `pm_plan.worker_pool.workers[i].execution_mode = "goal_driven"` when:
 {
   "worker_pool": {
     "workers": [{
-      "execution_mode": "prescriptive | goal_driven",
-      "success_criteria": [{
+            "success_criteria": [{
         "criterion_id": "SC001",
         "description": "validation tests for invalid inputs all pass",
         "verification_method": "automated_test | manual_check | metric_threshold",
@@ -99,16 +94,11 @@ PM sets `pm_plan.worker_pool.workers[i].execution_mode = "goal_driven"` when:
 | "Fix the bug" | "Write a test that reproduces it, then make it pass" |
 | "Refactor X" | "Ensure tests pass before and after" |
 
-### PM Step 3.7
+### Test-first transformation
 ```
-During PM Phase 2:
+Before starting a coding task:
   for each task in task_decomposition:
     if task.type in {"add_feature", "fix_bug", "refactor"}:
-      transform to goal_driven:
-        original: "Add X"
-        goal: "Tests for X behavior pass"
-        plan: ["1. Write failing test", "2. Implement", "3. Verify"]
-      mark worker.execution_mode = "goal_driven"
 ```
 
 ### Auto-conversion Matrix
@@ -221,7 +211,7 @@ A single lightweight `SKILL.md` captures the principles.
 
 Activation:
 - Direct user invocation.
-- PM auto-recommendation after task analysis for coding tasks.
+- Applies to any coding task; decide it when you read the task, not after writing.
 - Inject into Worker prompt (about 5KB).
 
 ### Token Cost
@@ -236,7 +226,6 @@ Activation:
 
 ### Phase A (immediate): Core
 - This document.
-- `goal_driven_executor.py`.
 - `test_first_transformer.py`.
 - `karpathy-guidelines/SKILL.md`.
 
